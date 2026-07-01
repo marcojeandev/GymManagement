@@ -15,6 +15,8 @@ class CashierMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        return $next($request);
+        if(!auth('sanctum')->check() && !auth('sanctum')->user()->isCashier()){
+            abort(403, 'Cashier access only');
+        }
     }
 }
