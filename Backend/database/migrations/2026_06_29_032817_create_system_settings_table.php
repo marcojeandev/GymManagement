@@ -13,12 +13,19 @@ return new class extends Migration
     {
         Schema::create('system_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('gym_name');
-            $table->string('logo');
-            $table->text('description');
-            $table->text('location');
-            $table->text('gmail');
-            $table->text('contact');
+            $table->string('gym_name')->default('My gym');
+            $table->string('logo')->nullable();
+            $table->text('description')->nullable();
+            $table->text('location')->nullable();
+            $table->text('email')->nullable();
+            $table->text('contact')->nullable();
+            $table->json('social_links')->nullable();
+            $table->json('gallery')->nullable();
+            $table->json('features')->nullable();
+            $table->json('pricing')->nullable();
+            $table->string('favicon')->nullable();
+            $table->string('primary_color')->default('#ef4444');
+            $table->string('secondary_color')->default('#dc2626');
             $table->timestamps();
         });
     }
