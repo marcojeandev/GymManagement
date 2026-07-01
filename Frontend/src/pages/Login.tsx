@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dumbbell, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSetupStatus } from '../hooks/useSetupStatus';
+import { authService } from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -38,13 +39,32 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call or connect to actual API later
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      const response = await authService.login(formData.email, formData.password);
+      const { data } = response.data;
+
+      // Persist auth data
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
       toast.success('Logged in successfully!');
-      // Assuming a generic redirect after login
-      navigate('/dashboard'); 
-    }, 1500);
+
+      // Redirect based on role
+      if (data.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      // Use the backend's message when available, otherwise a generic fallback
+      const message =
+        error?.response?.data?.message ||
+        'Something went wrong. Please try again.';
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,7 +72,7 @@ const Login = () => {
       {/* Left side - Image/Branding */}
       <div className="hidden md:flex md:w-1/2 relative bg-gray-900 overflow-hidden items-center justify-center">
         <div className="absolute inset-0 bg-gradient-to-br from-red-600/30 to-black/90 z-10" />
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop')" }}
         />
@@ -68,15 +88,15 @@ const Login = () => {
       {/* Right side - Form */}
       <div className="flex-1 flex items-center justify-center p-8 sm:p-12 md:p-20 relative">
         <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-black to-[#111] pointer-events-none" />
-        
+
         <div className="w-full max-w-md relative z-10">
           <div className="md:hidden flex flex-col items-center mb-10">
-             <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(220,38,38,0.4)]">
-               <Dumbbell className="w-8 h-8 text-white" />
-             </div>
-             <h2 className="text-3xl font-bold text-center tracking-tight">Welcome Back</h2>
+            <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(220,38,38,0.4)]">
+              <Dumbbell className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-3xl font-bold text-center tracking-tight">Welcome Back</h2>
           </div>
-          
+
           <div className="hidden md:block mb-12">
             <h2 className="text-4xl font-extrabold mb-3 tracking-tight">Welcome Back</h2>
             <p className="text-gray-400 text-lg">Sign in to your account to continue</p>
@@ -93,7 +113,7 @@ const Login = () => {
                   type="email"
                   required
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all outline-none text-white placeholder-gray-500"
                   placeholder="Enter your email"
                 />
@@ -113,7 +133,7 @@ const Login = () => {
                   type="password"
                   required
                   value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="w-full pl-11 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all outline-none text-white placeholder-gray-500"
                   placeholder="••••••••"
                 />
@@ -140,10 +160,6 @@ const Login = () => {
             Don't have an account?{' '}
             <a href="#" className="text-red-500 hover:text-red-400 font-semibold transition-colors">Contact admin</a>
           </p>
-          
-          <button onClick={() => navigate('/')} className="w-full text-center mt-6 text-sm text-gray-500 hover:text-gray-300 transition-colors">
-            &larr; Back to Home
-          </button>
         </div>
       </div>
     </div>
