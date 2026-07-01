@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\MembershipFee;
 
 class Member extends Model
 {
@@ -20,6 +21,8 @@ class Member extends Model
         'qr_code',
         'profile',
         'sex',
+        'membership_status',
+        'contract_status'
     ];
 
     protected $casts = [
@@ -28,4 +31,8 @@ class Member extends Model
         'updated_at' => 'datetime',
     ];
 
+    public function membershipFee()
+    {
+        return $this->hasOne(MembershipFee::class);
+    }
 }

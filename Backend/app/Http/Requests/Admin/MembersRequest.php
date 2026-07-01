@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class MembersRequest extends FormRequest
 {
@@ -12,7 +13,7 @@ class MembersRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return auth()->check() && auth()->user()->isAdmin();
     }
 
     /**
@@ -20,10 +21,37 @@ class MembersRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+   public function rules(): array
     {
-        return [
-            //
+        $member = $this->route('member');
+        $memberId = $member ? $member->id : null;
+
+        $rules = [
+            // ... your existing fields
+            'password' => ['sometimes', 'string', 'min:8'],
+            'membership_id' => ['nullable', 'integer', 'exists:membership_pricing,id'],
+            'payment_type' => ['nullable', Rule::in(['cash', 'gcash'])],
+            'payment_amount' => ['nullable', 'numeric', 'min:0'],
+            'or_number' => ['nullable', 'string', 'max:50'],
+            'transaction_id' => ['nullable', 'string', 'max:100'],
+            'payment_status' => ['nullable', Rule::in(['pending', 'paid', 'failed'])],
+            'paid_at' => ['nullable', 'date'],
         ];
+
+        // Make fields optional on update
+        if ($this->isMethod('PATCH') || $this->isMethod('PUT')) {
+            foreach ($rules as $field => $rule) {
+                if (is_string($rule) && strpos($rule, 'nullable') === false && strpos($rule, 'sometimes') === false) {
+                    $rules[$field] = 'sometimes|' . $rule;
+                } elseif (is_array($rule)) {
+                    if (!in_array('sometimes', $rule) && !in_array('nullable', $rule)) {
+                        array_unshift($rule, 'sometimes');
+                    }
+                    $rules[$field] = $rule;
+                }
+            }
+        }
+
+        return $rules;
     }
 }
