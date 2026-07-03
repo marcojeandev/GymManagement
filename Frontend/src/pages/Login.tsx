@@ -1,9 +1,10 @@
+// File: src/pages/Login.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSetupStatus } from '../hooks/useSetupStatus';
-import { authService } from '../services/api';
+import { authService } from '../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -11,14 +12,12 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
 
-  // Guard: if system has NOT been configured, redirect to setup
   useEffect(() => {
     if (setupStatus === 'not_configured') {
       navigate('/setup', { replace: true });
     }
   }, [setupStatus, navigate]);
 
-  // Show branded loader while checking, or while redirecting to setup
   if (setupStatus === 'loading' || setupStatus === 'not_configured') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0a] gap-6">
@@ -44,20 +43,18 @@ const Login = () => {
       const response = await authService.login(formData.email, formData.password);
       const { data } = response.data;
 
-      // Persist auth data
+      // ✅ Store token
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
       toast.success('Logged in successfully!');
 
-      // Redirect based on role
       if (data.user.role === 'admin') {
         navigate('/admin');
       } else {
         navigate('/dashboard');
       }
     } catch (error: any) {
-      // Use the backend's message when available, otherwise a generic fallback
       const message =
         error?.response?.data?.message ||
         'Something went wrong. Please try again.';

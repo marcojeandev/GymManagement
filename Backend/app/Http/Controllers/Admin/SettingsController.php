@@ -16,24 +16,51 @@ class SettingsController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function getMembershipPrice()
     {
         try {
             $membershipPrice = MembershipPrice::first();
-            $contractPrice = ContractPrice::first();
-            $gymSetting = GymSetting::first();
-
             $this->authorize('view', $membershipPrice ?? MembershipPrice::class);
+
+            return response()->json([
+                'status' => 1,
+                'data' => $membershipPrice
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Server error.'
+            ], 500);
+        }
+    }
+
+    public function getContractPrice()
+    {
+        try {
+            $contractPrice = ContractPrice::first();
             $this->authorize('view', $contractPrice ?? ContractPrice::class);
+
+            return response()->json([
+                'status' => 1,
+                'data' => $contractPrice
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Server error.'
+            ], 500);
+        }
+    }
+
+    public function getGymSettings()
+    {
+        try {
+            $gymSetting = GymSetting::first();
             $this->authorize('view', $gymSetting ?? GymSetting::class);
 
             return response()->json([
                 'status' => 1,
-                'data' => [
-                    'membership_price' => $membershipPrice,
-                    'contract_price'   => $contractPrice,
-                    'gym_settings'     => $gymSetting,
-                ]
+                'data' => $gymSetting
             ]);
         } catch (\Throwable $e) {
             return response()->json([

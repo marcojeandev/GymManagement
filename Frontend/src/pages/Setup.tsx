@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { settingsService } from '../services/api';
+import { settingsService } from '../services/settingsService'; // ✅ correct import
 import { useSetupStatus } from '../hooks/useSetupStatus';
 import toast from 'react-hot-toast';
 import {

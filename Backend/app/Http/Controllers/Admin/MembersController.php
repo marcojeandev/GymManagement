@@ -8,9 +8,8 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Http\Requests\Admin\MembersRequest;
 use App\Models\Member;
 use App\Models\MembershipFee;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Str;
 
 class MembersController extends Controller
 {
@@ -23,16 +22,6 @@ class MembersController extends Controller
 
             $query = Member::query();
 
-            if ($request->has('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('firstname', 'LIKE', "%{$search}%")
-                      ->orWhere('lastname', 'LIKE', "%{$search}%")
-                      ->orWhere('email', 'LIKE', "%{$search}%")
-                      ->orWhere('contact', 'LIKE', "%{$search}%");
-                });
-            }
-
             if ($request->has('sex') && in_array($request->sex, ['male', 'female'])) {
                 $query->where('sex', $request->sex);
             }
@@ -42,7 +31,6 @@ class MembersController extends Controller
             }
 
             $members = $query->latest()->paginate($request->per_page ?? 15);
-
             $members->load('membershipFee');
 
             return response()->json([
@@ -82,22 +70,30 @@ class MembersController extends Controller
             $validated = $request->validated();
             $this->authorize('create', Member::class);
 
-            if (isset($validated['password'])) {
-                $validated['password'] = Hash::make($validated['password']);
-            }
+            $validated["profile"] = $request->hasFile('profile') ?
+                $request->file('profile')->store('public', 'profiles') : null;
 
-            if ($request->hasFile('profile')) {
-                $path = $request->file('profile')->store('profiles', 'public');
-                $validated['profile'] = $path;
-            }
+            // For postman purpose
+            // if ($request->hasFile('profile')) {
+            //     $path = $request->file('profile')->store('profiles', 'public');
+            //     $validated['profile'] = $path;
+            // } else {
+            //     $defaultPath = public_path('sample/iori.jpg');
+            //     if (file_exists($defaultPath)) {
+            //         $filename = 'profiles/default_' . uniqid() . '.jpg';
+            //         Storage::disk('public')->put($filename, file_get_contents($defaultPath));
+            //         $validated['profile'] = $filename;
+            //     } else {
+            //         $validated['profile'] = null; 
+            //     }
+            // }
 
-            $validated['qr_code'] = $this->generateQrCode();
+            $validated['qr_code'] = $this->generateQRCode();
 
             $member = Member::create($validated);
 
             if (!empty($validated['membership_id'])) {
                 $member->membershipFee()->create([
-                    'members_id' => $member->id,
                     'membership_id' => $validated['membership_id'],
                     'payment_type' => $validated['payment_type'] ?? 'cash',
                     'payment_amount' => $validated['payment_amount'] ?? null,
@@ -201,30 +197,8 @@ class MembersController extends Controller
         }
     }
 
-    private function generateQrCode(): ?string
+    private function generateQRCode(): string
     {
-        try {
-            // Generate a unique identifier for the QR code (e.g., UUID)
-            $uniqueId = (string) \Illuminate\Support\Str::uuid();
-
-            // Data to encode in the QR (could be the unique ID)
-            $qrData = 'MEMBER-' . $uniqueId;
-
-            // Generate QR code image
-            $qrImage = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                        ->size(300)
-                        ->errorCorrection('H')
-                        ->generate($qrData);
-
-            // Store the image
-            $fileName = 'qr_codes/' . $uniqueId . '.png';
-            $fullPath = 'public/' . $fileName;
-            Storage::put($fullPath, $qrImage);
-
-            return $fileName;
-        } catch (\Exception $e) {
-            \Log::error('QR Code generation failed: ' . $e->getMessage());
-            return null;
-        }
+        return 'QR-' . strtoupper(Str::random(10));
     }
 }

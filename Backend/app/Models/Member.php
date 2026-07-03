@@ -33,6 +33,6 @@ class Member extends Model
 
     public function membershipFee()
     {
-        return $this->hasOne(MembershipFee::class);
+        return $this->hasOne(MembershipFee::class, 'members_id');
     }
 }

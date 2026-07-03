@@ -1,11 +1,9 @@
+// File: src/pages/Landing.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { settingsService, STORAGE_URL } from '../services/api';
 import toast from 'react-hot-toast';
-import {
-  Dumbbell, MapPin, Mail, Phone, LogIn, Loader2,
-  ArrowRight, Activity, Users, CalendarCheck, ShieldCheck
-} from 'lucide-react';
+import { Loader2, Dumbbell } from 'lucide-react';
+import { settingsService } from '../services/settingsService'; // ✅ correct import
 
 interface SettingsData {
   gym_name: string;
@@ -19,7 +17,6 @@ interface SettingsData {
 
 const Landing = () => {
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState<SettingsData | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -28,16 +25,13 @@ const Landing = () => {
         const res = await settingsService.getSettings();
         const data: SettingsData = res.data.data;
 
-        // If gym_name is empty/null, the system has not been set up yet → go to setup
         if (!data || !data.gym_name || data.gym_name.trim() === '') {
           navigate('/setup', { replace: true });
           return;
         }
 
-        // System is already configured → go straight to login
         navigate('/login', { replace: true });
       } catch {
-        // If the API errors (e.g. 404 / no settings yet) → treat as not configured
         navigate('/setup', { replace: true });
       } finally {
         setLoading(false);
@@ -47,8 +41,6 @@ const Landing = () => {
     fetchSettings();
   }, [navigate]);
 
-  // This component just acts as the smart redirect gate
-  // Show a branded loader while we decide where to send the user
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#080808] gap-6">
       <div className="relative">

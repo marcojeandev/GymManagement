@@ -26,9 +26,31 @@ class MembersRequest extends FormRequest
         $member = $this->route('member');
         $memberId = $member ? $member->id : null;
 
-        $rules = [
-            // ... your existing fields
-            'password' => ['sometimes', 'string', 'min:8'],
+         $rules = [
+            // Member fields
+            'firstname' => 'required|string|max:255',
+            'middlename' => 'nullable|string|max:255',
+            'lastname' => 'required|string|max:255',
+            'suffix' => 'nullable|string|max:10',
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('members')->ignore($memberId),
+            ],
+            'contact' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('members')->ignore($memberId),
+            ],
+            'address' => 'required|string',
+            'sex' => ['required', Rule::in(['male', 'female'])],
+            'membership_status' => ['nullable', Rule::in(['active', 'expired'])],
+            'contract_status' => ['nullable', Rule::in(['active', 'expired'])],
+            'profile' => 'nullable|string|max:255',
+
+            // Membership fee fields
             'membership_id' => ['nullable', 'integer', 'exists:membership_pricing,id'],
             'payment_type' => ['nullable', Rule::in(['cash', 'gcash'])],
             'payment_amount' => ['nullable', 'numeric', 'min:0'],
@@ -37,7 +59,6 @@ class MembersRequest extends FormRequest
             'payment_status' => ['nullable', Rule::in(['pending', 'paid', 'failed'])],
             'paid_at' => ['nullable', 'date'],
         ];
-
         // Make fields optional on update
         if ($this->isMethod('PATCH') || $this->isMethod('PUT')) {
             foreach ($rules as $field => $rule) {

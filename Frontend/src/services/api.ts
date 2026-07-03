@@ -1,17 +1,16 @@
+// File: src/services/api.ts
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-export const STORAGE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '/storage') : 'http://localhost:8000/storage';
-
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
+    'Accept': 'application/json',
     'Content-Type': 'application/json',
-    Accept: 'application/json',
   },
+  withCredentials: false,
 });
 
-// Interceptor: Add token to every request
+// ✅ Request interceptor – attach token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -23,30 +22,16 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ============================================
-// AUTH SERVICE
-// ============================================
-export const authService = {
-  login: (email: string, password: string) =>
-    api.post('/login', { email, password }),
-};
-
-// ============================================
-// USER SERVICE
-// ============================================
-export const userService = {
-  getUser: () =>
-    api.get('/user'),
-};
-
-// ============================================
-// SETTINGS SERVICE
-// ============================================
-export const settingsService = {
-    getSettings: () => api.get('/settings'),
-    updateSettings: (data: FormData) => api.post('/settings', data, {
-        headers: { 'Content-Type': undefined }
-    }),
-};
+// ✅ Response interceptor – handle 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

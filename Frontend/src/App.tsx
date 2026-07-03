@@ -6,6 +6,7 @@ import Setup from './pages/Setup';
 import AdminLayout from './layouts/AdminLayout';
 import Dashboard from './pages/admin/Dashboard';
 import Members from './pages/admin/Members';
+import { ProtectedRoute } from './components/ProtectedRoute';
 // other admin pages will be added here
 
 function App() {
