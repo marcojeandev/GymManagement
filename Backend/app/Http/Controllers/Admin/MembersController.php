@@ -69,9 +69,9 @@ class MembersController extends Controller
         try {
             $validated = $request->validated();
             $this->authorize('create', Member::class);
-
+            
             $validated["profile"] = $request->hasFile('profile') ?
-                $request->file('profile')->store('public', 'profiles') : null;
+                $request->file('profile')->store('profiles', 'public') : null;
 
             // For postman purpose
             // if ($request->hasFile('profile')) {

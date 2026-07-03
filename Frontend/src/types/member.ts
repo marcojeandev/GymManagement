@@ -47,6 +47,5 @@ export interface MemberFormData {
   transaction_id: string;
   payment_status: 'pending' | 'paid' | 'failed';
   paid_at: string;
-  password: string;
   profile: File | null;
 }

@@ -1,4 +1,6 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
+// File: src/layouts/AdminLayout.tsx
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -12,9 +14,16 @@ import {
   LogOut,
   Dumbbell
 } from 'lucide-react';
+import { authService } from '../services/authService';
+import { settingsService } from '../services/admin/settingsService';
+import toast from 'react-hot-toast';
 
 const AdminLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [gymName, setGymName] = useState('Gym');
+  const [logo, setLogo] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const navItems = [
     { name: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
@@ -28,15 +37,73 @@ const AdminLayout = () => {
     { name: 'System Settings', path: '/admin/settings', icon: <Settings size={20} /> },
   ];
 
+  // Fetch gym settings
+  useEffect(() => {
+    const fetchGymSettings = async () => {
+      try {
+        const res = await settingsService.getGymSettings();
+        const data = res.data.data;
+        if (data) {
+          setGymName(data.gym_name || 'Gym');
+          setLogo(data.logo || null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch gym settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGymSettings();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login', { replace: true });
+    }
+  };
+
+  // Build the logo URL
+  const logoUrl = logo ? `${import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage'}/${logo}` : null;
+
   return (
     <div className="flex h-screen bg-gray-900 text-white font-sans overflow-hidden">
       {/* Sidebar */}
       <aside className="w-64 bg-gray-950 border-r border-gray-800 flex flex-col">
         <div className="p-6 flex items-center gap-3 border-b border-gray-800">
-          <div className="bg-red-500 p-2 rounded-lg">
-            <Dumbbell className="text-white" size={24} />
-          </div>
-          <h1 className="text-xl font-bold tracking-wider">GYM<span className="text-red-500">PRO</span></h1>
+          {loading ? (
+            <div className="w-10 h-10 rounded-lg bg-gray-700 animate-pulse" />
+          ) : logoUrl ? (
+            <img
+            src={logoUrl}
+            alt="Gym Logo"
+            className="w-10 h-10 object-contain rounded-lg"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              // Fallback to default icon
+              const parent = e.currentTarget.parentElement;
+              if (parent) {
+                const defaultIcon = document.createElement('div');
+                defaultIcon.className = 'bg-red-500 p-2 rounded-lg';
+                defaultIcon.innerHTML = `<svg class="text-white" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>`;
+                parent.prepend(defaultIcon);
+              }
+            }}
+          />
+          ) : (
+            <div className="bg-red-500 p-2 rounded-lg">
+              <Dumbbell className="text-white" size={24} />
+            </div>
+          )}
+          <h1 className="text-xl font-bold tracking-wider truncate">
+            {loading ? 'Loading...' : gymName || 'Gym'}
+          </h1>
         </div>
         
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 custom-scrollbar">
@@ -63,14 +130,15 @@ const AdminLayout = () => {
           })}
         </nav>
 
+        {/* Logout Button */}
         <div className="p-4 border-t border-gray-800">
-          <Link
-            to="/login"
+          <button
+            onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800/50 hover:text-red-400 transition-colors w-full"
           >
             <LogOut size={20} />
             Logout
-          </Link>
+          </button>
         </div>
       </aside>
 
