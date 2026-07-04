@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Models\Contract;
+use App\Policies\ContractPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
     {
         //
     }
-
+    protected $policies = [
+        Contract::class => ContractPolicy::class,
+    ];  
     /**
      * Bootstrap any application services.
      */

@@ -9,6 +9,7 @@ import { MembersPage } from './pages/admin/Members';
 import { SystemSettingsPage } from './pages/admin/SystemSettings';
 import { useEffect, useState } from 'react';
 import { checkSystemStatus } from './services/api';
+import { ContractsPage } from './pages/admin/Contracts';
 
 function SystemGuard({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'configured' | 'unconfigured'>('loading');
@@ -68,6 +69,13 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="/dashboard/contracts"
+        element={
+          <ProtectedRoute>
+            <ContractsPage />
+          </ProtectedRoute>
+          } 
+        />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );

@@ -4,13 +4,22 @@ import type { Member, MemberFilters } from '../types/Members';
 export const memberApi = {
   async getMembers(filters: MemberFilters = {}) {
     const params = new URLSearchParams();
+    
+    // Search parameter – backend likely uses 'search' to search name/email/contact
+    if (filters.search) params.append('search', filters.search);
+    
+    // Sex filter – backend expects 'sex' with 'male' or 'female'
     if (filters.sex) params.append('sex', filters.sex);
+    
+    // Membership status filter – backend expects 'membership_status'
     if (filters.membership_status) params.append('membership_status', filters.membership_status);
+    
+    // Pagination
     if (filters.per_page) params.append('per_page', String(filters.per_page));
     if (filters.page) params.append('page', String(filters.page));
-    if (filters.search) params.append('search', filters.search);
+    
     const response = await api.get(`/admin/members?${params.toString()}`);
-    return response.data.data;
+    return response.data.data; // returns { data: [...], current_page, last_page, ... }
   },
 
   async getMember(id: number) {
@@ -34,5 +43,14 @@ export const memberApi = {
 
   async deleteMember(id: number) {
     await api.delete(`/admin/members/${id}`);
+  },
+
+  // For MemberSearchSelect (used in contracts)
+  async getMembersSimple(filters: { search?: string } = {}) {
+    const params = new URLSearchParams();
+    if (filters.search) params.append('search', filters.search);
+    params.append('per_page', '20');
+    const response = await api.get(`/admin/members?${params.toString()}`);
+    return response.data.data;
   },
 };

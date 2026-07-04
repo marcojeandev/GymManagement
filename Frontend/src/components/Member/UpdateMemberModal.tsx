@@ -4,6 +4,7 @@ import { memberApi } from '../../services/memberApi';
 import { systemSettingsApi } from '../../services/systemSettingsApi';
 import type { MembershipPrice } from '../../services/systemSettingsApi';
 import type { Member, MemberFormData } from '../../types/Members';
+import { X, Camera, Upload } from 'lucide-react';
 
 interface UpdateMemberModalProps {
   isOpen: boolean;
@@ -116,15 +117,18 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
   if (!isOpen || !form) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 flex items-center justify-center p-4">
+      <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl shadow-red-500/10">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Update Member</h2>
-          <button onClick={handleClose} className="text-gray-400 hover:text-white text-2xl">&times;</button>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
+            Update Member
+          </h2>
+          <button onClick={handleClose} className="text-gray-400 hover:text-white transition p-1 rounded-lg hover:bg-gray-700/50">
+            <X size={24} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Personal Info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300">First Name *</label>
@@ -134,7 +138,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 required
                 value={form.firstname}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               />
             </div>
             <div>
@@ -144,7 +148,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 name="middlename"
                 value={form.middlename}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               />
             </div>
             <div>
@@ -155,7 +159,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 required
                 value={form.lastname}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               />
             </div>
           </div>
@@ -167,7 +171,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 name="suffix"
                 value={form.suffix}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               >
                 {suffixes.map((s) => (
                   <option key={s} value={s}>{s || 'None'}</option>
@@ -181,7 +185,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 required
                 value={form.sex}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               >
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -198,12 +202,12 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 required
                 value={form.email}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300">Contact (+63)</label>
-              <div className="mt-1 flex items-center bg-[#1e242c] border border-gray-600 rounded-lg focus-within:ring-2 focus-within:ring-red-500">
+              <div className="mt-1 flex items-center bg-[#1e242c] border border-gray-600 rounded-lg focus-within:ring-2 focus-within:ring-red-500 transition">
                 <span className="pl-3 text-gray-400 select-none">+63</span>
                 <input
                   type="text"
@@ -230,7 +234,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
               rows={2}
               value={form.address}
               onChange={handleChange}
-              className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+              className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition resize-none"
             />
           </div>
 
@@ -242,7 +246,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 required
                 value={form.membership_status}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               >
                 <option value="active">Active</option>
                 <option value="expired">Expired</option>
@@ -255,7 +259,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 required
                 value={form.contract_status}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               >
                 <option value="active">Active</option>
                 <option value="expired">Expired</option>
@@ -266,20 +270,15 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
 
           <hr className="border-gray-700" />
 
-          {/* Membership Fee Section - READONLY */}
           <h3 className="text-lg font-semibold text-white">Membership Fee</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300">Membership Plan *</label>
-              <input
-                type="hidden"
-                name="membership_id"
-                value={form.membership_id}
-              />
+              <input type="hidden" name="membership_id" value={form.membership_id} />
               <div className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white">
-                {pricing ? `(₱${pricing.price} / ${' Permanent'} )` : 'No plan set'}
+                {pricing ? `(₱${pricing.price} / Permanent)` : 'No plan set'}
               </div>
-              {!pricing && <p className="text-xs text-yellow-500 mt-1">No membership plan set. Please set in System Settings.</p>}
+              {!pricing && <p className="text-xs text-yellow-500 mt-1">No membership plan set.</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300">Price</label>
@@ -297,7 +296,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 required
                 value={form.payment_type}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               >
                 <option value="cash">Cash</option>
                 <option value="gcash">GCash</option>
@@ -311,7 +310,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 name="payment_amount"
                 value={form.payment_amount}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               />
             </div>
           </div>
@@ -336,7 +335,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                   name="transaction_id"
                   value={form.transaction_id}
                   onChange={handleChange}
-                  className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
                 />
               </div>
             )}
@@ -350,7 +349,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 required
                 value={form.payment_status}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               >
                 <option value="pending">Pending</option>
                 <option value="paid">Paid</option>
@@ -364,45 +363,21 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 name="paid_at"
                 value={form.paid_at}
                 onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               />
             </div>
           </div>
 
-          {/* Profile Photo - with Capture and Upload */}
+          {/* Profile Photo */}
           <div>
             <label className="block text-sm font-medium text-gray-300">Profile Photo</label>
-            <div className="flex gap-2 mt-1">
-              {/* Camera Capture Button */}
-              <button
-                type="button"
-                onClick={() => document.getElementById('camera-input-update')?.click()}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm flex items-center"
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Take Photo
-              </button>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                id="camera-input-update"
-                onChange={handleChange}
-                className="hidden"
-              />
-
-              {/* Upload File Button */}
+            <div className="flex flex-wrap gap-3 mt-2">
               <label
                 htmlFor="file-input-update"
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition text-sm flex items-center cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition cursor-pointer"
               >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Upload Photo
+                <Upload size={18} />
+                Upload
               </label>
               <input
                 type="file"
@@ -411,26 +386,26 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
                 onChange={handleChange}
                 className="hidden"
               />
+              <button
+                type="button"
+                onClick={() => {
+                  setPreview(null);
+                  setForm((prev) => prev ? { ...prev, profile: null } : null);
+                }}
+                className="px-4 py-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg transition"
+              >
+                Remove
+              </button>
             </div>
             {preview && (
-              <div className="mt-2 flex items-center gap-3">
-                <img src={preview} alt="Profile preview" className="h-16 w-16 object-cover rounded-full border border-gray-600" />
+              <div className="mt-3 flex items-center gap-3">
+                <img src={preview} alt="Profile preview" className="h-16 w-16 object-cover rounded-full border-2 border-red-500/30" />
                 <span className="text-gray-400 text-sm">Preview</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreview(member?.profile ? `http://localhost:8000/storage/${member.profile}` : null);
-                    setForm((prev) => prev ? { ...prev, profile: null } : null);
-                  }}
-                  className="text-red-400 hover:text-red-300 text-sm"
-                >
-                  Remove
-                </button>
               </div>
             )}
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-700/30">
             <button
               type="button"
               onClick={handleClose}
@@ -441,7 +416,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition disabled:opacity-70"
+              className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium rounded-lg transition-all duration-300 shadow-lg shadow-red-600/20 disabled:opacity-70"
             >
               {loading ? 'Updating...' : 'Update Member'}
             </button>

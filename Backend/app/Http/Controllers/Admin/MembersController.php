@@ -22,6 +22,16 @@ class MembersController extends Controller
 
             $query = Member::query();
 
+            if ($request->has('search') && !empty($request->search)) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('firstname', 'LIKE', "%{$search}%")
+                    ->orWhere('lastname', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('contact', 'LIKE', "%{$search}%");
+                });
+            }
+
             if ($request->has('sex') && in_array($request->sex, ['male', 'female'])) {
                 $query->where('sex', $request->sex);
             }

@@ -34,23 +34,6 @@ class SettingsController extends Controller
         }
     }
 
-    public function getContractPrice()
-    {
-        try {
-            $contractPrice = ContractPrice::first();
-            $this->authorize('view', $contractPrice ?? ContractPrice::class);
-
-            return response()->json([
-                'status' => 1,
-                'data' => $contractPrice
-            ]);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Server error.'
-            ], 500);
-        }
-    }
 
     public function getGymSettings()
     {
@@ -101,36 +84,6 @@ class SettingsController extends Controller
         }
     }
 
-    public function ContractPrice(ContractPriceRequest $request)
-    {
-        try {
-            $validated = $request->validated();
-            $contractPrice = ContractPrice::first();
-
-            if ($contractPrice) {
-                $this->authorize('update', $contractPrice);
-                $contractPrice->update($validated);
-                $status = 200;
-                $message = 'Contract price updated.';
-            } else {
-                $this->authorize('create', ContractPrice::class);
-                $contractPrice = ContractPrice::create($validated);
-                $status = 201;
-                $message = 'Contract price created.';
-            }
-
-            return response()->json([
-                'status' => 1,
-                'message' => $message,
-                'data' => $contractPrice
-            ], $status);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Server error.'
-            ], 500);
-        }
-    }
 
     public function SystemSettings(SystemSettingRequest $request)
     {
@@ -153,4 +106,88 @@ class SettingsController extends Controller
             ], 500);
         }
     }
+
+    /**
+ * Get all contract prices.
+ */
+public function getContractPrices()
+{
+    try {
+        $this->authorize('viewAny', ContractPrice::class);
+        $prices = ContractPrice::all();
+        return response()->json([
+            'status' => 1,
+            'data' => $prices,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 0,
+            'message' => 'Server error: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+
+/**
+ * Store a new contract price.
+ */
+public function storeContractPrice(ContractPriceRequest $request)
+{
+    try {
+        $this->authorize('create', ContractPrice::class);
+        $validated = $request->validated();
+        $contractPrice = ContractPrice::create($validated);
+        return response()->json([
+            'status' => 1,
+            'message' => 'Contract price created.',
+            'data' => $contractPrice,
+        ], 201);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 0,
+            'message' => 'Server error: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+
+/**
+ * Update an existing contract price.
+ */
+public function updateContractPrice(ContractPriceRequest $request, ContractPrice $contractPrice)
+{
+    try {
+        $this->authorize('update', $contractPrice);
+        $validated = $request->validated();
+        $contractPrice->update($validated);
+        return response()->json([
+            'status' => 1,
+            'message' => 'Contract price updated.',
+            'data' => $contractPrice,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 0,
+            'message' => 'Server error: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+
+/**
+ * Delete a contract price.
+ */
+public function deleteContractPrice(ContractPrice $contractPrice)
+{
+    try {
+        $this->authorize('delete', $contractPrice);
+        $contractPrice->delete();
+        return response()->json([
+            'status' => 1,
+            'message' => 'Contract price deleted.',
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 0,
+            'message' => 'Server error: ' . $e->getMessage(),
+        ], 500);
+    }
+}
 }

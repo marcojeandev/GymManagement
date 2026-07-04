@@ -2,6 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { memberApi } from '../../services/memberApi';
 import type { Member } from '../../types/Members';
+import { X, AlertTriangle } from 'lucide-react';
 
 interface DeleteMemberModalProps {
   isOpen: boolean;
@@ -31,10 +32,18 @@ export const DeleteMemberModal = ({ isOpen, onClose, onSuccess, member }: Delete
   if (!isOpen || !member) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 w-full max-w-md p-6">
-        <h2 className="text-xl font-bold text-white mb-2">Confirm Delete</h2>
-        <p className="text-gray-300 mb-4">
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+      <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 w-full max-w-md p-6 shadow-2xl shadow-red-500/20">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <AlertTriangle size={22} className="text-red-400" />
+            Confirm Delete
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition p-1 rounded-lg hover:bg-gray-700/50">
+            <X size={20} />
+          </button>
+        </div>
+        <p className="text-gray-300 mb-6">
           Are you sure you want to delete <span className="text-white font-semibold">{member.firstname} {member.lastname}</span>? This action cannot be undone.
         </p>
         <div className="flex justify-end gap-3">
@@ -47,7 +56,7 @@ export const DeleteMemberModal = ({ isOpen, onClose, onSuccess, member }: Delete
           <button
             onClick={handleDelete}
             disabled={loading}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition disabled:opacity-70"
+            className="px-6 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-medium rounded-lg transition-all duration-300 shadow-lg shadow-red-600/20 disabled:opacity-70"
           >
             {loading ? 'Deleting...' : 'Delete'}
           </button>

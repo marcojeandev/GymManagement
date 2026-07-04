@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('members_id')->constrained('members')->onDelete('cascade');
             $table->foreignId('contract_id')->constrained('contract_pricing')->onDelete('cascade');
+            $table->date('contract_from');
+            $table->date('contract_to');
             $table->enum('payment_type', ['cash', 'gcash']);
             $table->decimal('payment_amount', 10, 2)->nullable();
             $table->string('or_number')->nullable();

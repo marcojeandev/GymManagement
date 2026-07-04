@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\MembershipFee;
 
 class MembershipPrice extends Model
 {
@@ -11,4 +12,9 @@ class MembershipPrice extends Model
         'price',
         'description'
     ];
+
+    public function membershipFee()
+    {
+        return $this->hasMany(MembershipFee::class);
+    }
 }
