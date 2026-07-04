@@ -46,8 +46,8 @@ class MembersRequest extends FormRequest
             ],
             'address' => 'required|string',
             'sex' => ['required', Rule::in(['male', 'female'])],
-            'membership_status' => ['nullable', Rule::in(['active', 'expired'])],
-            'contract_status' => ['nullable', Rule::in(['active', 'expired'])],
+            'membership_status' => ['nullable', Rule::in(['active', 'expired', 'pending'])],
+            'contract_status' => ['nullable', Rule::in(['active', 'expired', 'pending'])],
             'profile' => ['required', 'image', 'max:2048', 'mimes:jpg,jpeg,png,gif'],
             // Membership fee fields
             'membership_id' => ['nullable', 'integer', 'exists:membership_pricing,id'],

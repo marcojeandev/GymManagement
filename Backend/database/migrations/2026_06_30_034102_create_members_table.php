@@ -23,8 +23,8 @@ return new class extends Migration
             $table->string('qr_code');
             $table->string('profile');
             $table->enum('sex', ['male', 'female']);
-            $table->enum('membership_status', ['active', 'expired']);
-            $table->enum('contract_status', ['active', 'expired']);
+            $table->enum('membership_status', ['active', 'expired', 'pending']);
+            $table->enum('contract_status', ['active', 'expired', 'pending']);
             $table->timestamps();
         });
     }

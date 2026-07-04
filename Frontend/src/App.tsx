@@ -1,44 +1,96 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast' ;
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Setup from './pages/Setup';
-import AdminLayout from './layouts/AdminLayout';
-import Dashboard from './pages/admin/Dashboard';
-import Members from './pages/admin/Members';
+﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Setup } from './pages/Setup';
+import { Login } from './pages/Login';
+import { DashboardRouter } from './pages/DashboardRouter';
 import { ProtectedRoute } from './components/ProtectedRoute';
-// other admin pages will be added here
+import { MembersPage } from './pages/admin/Members';
+import { SystemSettingsPage } from './pages/admin/SystemSettings';
+import { useEffect, useState } from 'react';
+import { checkSystemStatus } from './services/api';
+
+function SystemGuard({ children }: { children: React.ReactNode }) {
+  const [status, setStatus] = useState<'loading' | 'configured' | 'unconfigured'>('loading');
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    checkSystemStatus()
+      .then((res) => setStatus(res.configured ? 'configured' : 'unconfigured'))
+      .catch(() => setStatus('unconfigured'));
+  }, []);
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-[#0b0d10] flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (status === 'unconfigured' && window.location.pathname !== '/setup') {
+    return <Navigate to="/setup" replace />;
+  }
+
+  if (status === 'configured' && window.location.pathname === '/setup') {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/setup" element={<Setup />} />
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardRouter />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/members"
+        element={
+          <ProtectedRoute>
+            <MembersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/system-settings"
+        element={
+          <ProtectedRoute>
+            <SystemSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Smart redirect gate: checks settings and routes accordingly */}
-        <Route path="/" element={<Landing />} />
-        {/* First-time gym setup wizard */}
-        <Route path="/setup" element={<Setup />} />
-        {/* Member login */}
-        <Route path="/login" element={<Login />} />
-        
-        {/* Admin Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="members" element={<Members />} />
-          {/* 
-          <Route path="contracts" element={<Contracts />} />
-          <Route path="products" element={<Products />} />
-          <Route path="sales" element={<Sales />} />
-          <Route path="attendance" element={<Attendance />} />
-          <Route path="walk-in" element={<WalkIn />} />
-          <Route path="walk-in-attendance" element={<WalkInAttendance />} />
-          <Route path="settings" element={<Settings />} />
-          */}
-        </Route>
-      </Routes>
-      <Toaster position="top-right" toastOptions={{
-        style: { background: '#1a1a1a', color: '#fff', border: '1px solid rgba(255,255,255,0.08)' },
-        success: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
-      }} />
+      <AuthProvider>
+        <SystemGuard>
+          <AppRoutes />
+        </SystemGuard>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: '#1e242c',
+              color: '#e8edf5',
+              border: '1px solid #374151',
+            },
+          }}
+        />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

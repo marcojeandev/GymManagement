@@ -1,419 +1,271 @@
-// File: src/pages/Admin/Members.tsx
 import { useState, useEffect } from 'react';
-import { memberService } from '../../services/admin/memberService';
-import { settingsService } from '../../services/admin/settingsService';
-import { Plus, Edit2, Trash2, Eye, Loader2, Users } from 'lucide-react';
+import { AdminLayout } from '../../layouts/AdminLayout';
+import { memberApi } from '../../services/memberApi';
+import type { Member, MemberFilters } from '../../types/Members';
+import { CreateMemberModal } from '../../components/Member/CreateMemberModal';
+import { UpdateMemberModal } from '../../components/Member/UpdateMemberModal';
+import { ViewMemberModal } from '../../components/Member/ViewMemberModal';
+import { DeleteMemberModal } from '../../components/Member/DeleteMemberModal';
 import toast from 'react-hot-toast';
-import type { Member, MemberFormData, MembershipPricing } from '../../types/member';
-import { MemberFormModal, ProfileModal } from '../../components/admin/MemberModals';
 
-const Members = () => {
+export const MembersPage = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<MemberFilters>({
+    per_page: 10,
+    page: 1,
+    search: '',
+  });
+  const [pagination, setPagination] = useState<any>(null);
+
+  // Modal states
+  const [createOpen, setCreateOpen] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [pricingOptions, setPricingOptions] = useState<MembershipPricing[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [membershipFee, setMembershipFee] = useState(150);
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
-
-  const [preview, setPreview] = useState<string | null>(null);
-  const [qrCode, setQrCode] = useState<string | undefined>(undefined);
-
-  const initialForm: MemberFormData = {
-    firstname: '', middlename: '', lastname: '', suffix: '',
-    email: '', contact: '', address: '', sex: 'male',
-    membership_id: '', payment_type: 'cash', payment_amount: '',
-    or_number: '', transaction_id: '', payment_status: 'pending',
-    paid_at: '', profile: null,
-  };
-  const [formData, setFormData] = useState<MemberFormData>(initialForm);
-
-  const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage';
+  useEffect(() => {
+    fetchMembers();
+  }, [filters]);
 
   const fetchMembers = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await memberService.getMembers();
-      setMembers(data);
-    } catch {
-      toast.error('Failed to fetch members');
-      setMembers([]);
+      const response = await memberApi.getMembers(filters);
+      setMembers(response.data);
+      setPagination({
+        current_page: response.current_page,
+        last_page: response.last_page,
+        per_page: response.per_page,
+        total: response.total,
+      });
+    } catch (error) {
+      toast.error('Failed to load members');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPricing = async () => {
-    try {
-      const res = await settingsService.getMembershipPrice();
-      const data = res.data.data;
-      if (data) {
-        setPricingOptions([{ id: data.id, name: 'Standard Plan', price: data.price }]);
-        setMembershipFee(data.price || 150);
-      }
-    } catch {
-      toast.error('Failed to load pricing');
-    }
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilters({ ...filters, search: e.target.value, page: 1 });
   };
 
-  useEffect(() => {
-    fetchMembers();
-    fetchPricing();
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (errors[e.target.name]) {
-      setErrors(prev => ({ ...prev, [e.target.name]: '' }));
-    }
+  const handleFilter = (key: keyof MemberFilters, value: string) => {
+    setFilters({ ...filters, [key]: value, page: 1 });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData({ ...formData, profile: file });
-      setPreview(URL.createObjectURL(file));
-    } else {
-      setPreview(null);
-      setFormData(prev => ({ ...prev, profile: null }));
-    }
-    if (errors.profile) setErrors(prev => ({ ...prev, profile: '' }));
+  const handlePageChange = (page: number) => {
+    setFilters({ ...filters, page });
   };
 
-  const resetForm = () => {
-    setFormData(initialForm);
-    setPreview(null);
-    setQrCode(undefined);
-    setErrors({});
-  };
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    setIsSubmitting(true);
-
-    if (!formData.membership_id && pricingOptions.length > 0) {
-      formData.membership_id = String(pricingOptions[0].id);
-    }
-
-    const newErrors: Record<string, string> = {};
-    if (!formData.firstname) newErrors.firstname = 'Required';
-    if (!formData.lastname) newErrors.lastname = 'Required';
-    if (!formData.email) newErrors.email = 'Required';
-    if (!formData.contact) newErrors.contact = 'Required';
-    if (!formData.address) newErrors.address = 'Required';
-    if (!formData.membership_id) newErrors.membership_id = 'Select a plan';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setIsSubmitting(false);
-      toast.error('Please fix the highlighted fields.');
-      return;
-    }
-
-    try {
-      const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== '') data.append(key, value);
-      });
-      await memberService.createMember(data);
-      toast.success('Member created successfully.');
-      setShowCreateModal(false);
-      resetForm();
-      fetchMembers();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Creation failed.';
-      toast.error(msg);
-      if (err.response?.data?.errors) {
-        setErrors(err.response.data.errors);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedMember) return;
-    setErrors({});
-    setIsSubmitting(true);
-
-    const newErrors: Record<string, string> = {};
-    if (!formData.firstname) newErrors.firstname = 'Required';
-    if (!formData.lastname) newErrors.lastname = 'Required';
-    if (!formData.email) newErrors.email = 'Required';
-    if (!formData.contact) newErrors.contact = 'Required';
-    if (!formData.address) newErrors.address = 'Required';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setIsSubmitting(false);
-      toast.error('Please fix the highlighted fields.');
-      return;
-    }
-
-    try {
-      const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== '') data.append(key, value);
-      });
-      await memberService.updateMember(selectedMember.id, data);
-      toast.success('Member updated successfully.');
-      setShowEditModal(false);
-      resetForm();
-      fetchMembers();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Update failed.';
-      toast.error(msg);
-      if (err.response?.data?.errors) {
-        setErrors(err.response.data.errors);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('Delete this member? This cannot be undone.')) return;
-    try {
-      await memberService.deleteMember(id);
-      toast.success('Member deleted.');
-      fetchMembers();
-    } catch {
-      toast.error('Delete failed.');
-    }
-  };
-
-  const openEditModal = (member: Member) => {
+  const openView = (member: Member) => {
     setSelectedMember(member);
-    setFormData({
-      firstname: member.firstname || '',
-      middlename: member.middlename || '',
-      lastname: member.lastname || '',
-      suffix: member.suffix || '',
-      email: member.email || '',
-      contact: member.contact || '',
-      address: member.address || '',
-      sex: member.sex || 'male',
-      membership_id: member.membership_fee?.membership_id?.toString() || '',
-      payment_type: member.membership_fee?.payment_type || 'cash',
-      payment_amount: member.membership_fee?.payment_amount?.toString() || '',
-      or_number: member.membership_fee?.or_number || '',
-      transaction_id: member.membership_fee?.transaction_id || '',
-      payment_status: member.membership_fee?.payment_status || 'pending',
-      paid_at: member.membership_fee?.paid_at || '',
-      profile: null,
-    });
-    setPreview(member.profile ? `${STORAGE_URL}/${member.profile}` : null);
-    setQrCode(member.qr_code || undefined);
-    setErrors({});
-    setShowEditModal(true);
+    setViewOpen(true);
   };
 
-  const openProfileModal = (member: Member) => {
+  const openUpdate = (member: Member) => {
     setSelectedMember(member);
-    setShowProfileModal(true);
+    setUpdateOpen(true);
+  };
+
+  const openDelete = (member: Member) => {
+    setSelectedMember(member);
+    setDeleteOpen(true);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap justify-between items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Members Management</h1>
-          <p className="text-sm text-gray-400 mt-1">Manage all registered user accounts (including non-members).</p>
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white">Members</h2>
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+          >
+            + Add Member
+          </button>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowCreateModal(true); }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition shadow-lg shadow-red-500/20 hover:shadow-red-500/40 active:scale-[0.98]"
-        >
-          <Plus size={18} />
-          Create Account
-        </button>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-gray-900/40 border border-gray-700/50 rounded-xl p-4">
-          <p className="text-sm text-gray-400">Total Members</p>
-          <p className="text-2xl font-bold text-white">{members.length}</p>
+        {/* Filters */}
+        <div className="bg-[#14181f] rounded-xl p-4 border border-gray-700/30 mb-6 flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-300 mb-1">Search</label>
+            <input
+              type="text"
+              placeholder="Name, email, contact..."
+              value={filters.search}
+              onChange={handleSearch}
+              className="w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+          </div>
+          <div className="w-40">
+            <label className="block text-sm font-medium text-gray-300 mb-1">Sex</label>
+            <select
+              value={filters.sex || ''}
+              onChange={(e) => handleFilter('sex', e.target.value)}
+              className="w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="">All</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div className="w-40">
+            <label className="block text-sm font-medium text-gray-300 mb-1">Membership</label>
+            <select
+              value={filters.membership_status || ''}
+              onChange={(e) => handleFilter('membership_status', e.target.value)}
+              className="w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="expired">Expired</option>
+            </select>
+          </div>
         </div>
-        <div className="bg-gray-900/40 border border-gray-700/50 rounded-xl p-4">
-          <p className="text-sm text-gray-400">Active Members</p>
-          <p className="text-2xl font-bold text-emerald-400">
-            {members.filter(m => m.membership_fee?.payment_status === 'paid').length}
-          </p>
-        </div>
-        <div className="bg-gray-900/40 border border-gray-700/50 rounded-xl p-4">
-          <p className="text-sm text-gray-400">Inactive Members</p>
-          <p className="text-2xl font-bold text-red-400">
-            {members.filter(m => m.membership_fee?.payment_status !== 'paid').length}
-          </p>
-        </div>
-      </div>
 
-      {/* Table Card */}
-      <div className="bg-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-800/50 text-xs uppercase text-gray-400 border-b border-gray-700/50">
+        {/* Table */}
+        <div className="bg-[#14181f] rounded-xl border border-gray-700/30 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-[#1e242c] text-gray-300">
               <tr>
-                <th className="px-6 py-4 font-medium">User</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium">Joined Date</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                <th className="px-4 py-3 text-left">Profile</th>
+                <th className="px-4 py-3 text-left">Name</th>
+                <th className="px-4 py-3 text-left">Email</th>
+                <th className="px-4 py-3 text-left">Contact</th>
+                <th className="px-4 py-3 text-left">Sex</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-left">Contract</th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700/30">
               {loading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-700" />
-                        <div>
-                          <div className="h-4 w-32 bg-gray-700 rounded" />
-                          <div className="h-3 w-40 bg-gray-700 rounded mt-1" />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4"><div className="h-4 w-16 bg-gray-700 rounded" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-24 bg-gray-700 rounded" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-20 bg-gray-700 rounded ml-auto" /></td>
-                  </tr>
-                ))
+                <tr>
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">Loading...</td>
+                </tr>
               ) : members.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                    <div className="flex flex-col items-center gap-2">
-                      <Users className="w-10 h-10 text-gray-600" />
-                      <span className="text-sm">No members yet.</span>
-                    </div>
-                  </td>
+                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400">No members found</td>
                 </tr>
               ) : (
-                members.map((m) => {
-                  const profileUrl = m.profile ? `${STORAGE_URL}/${m.profile}` : null;
-                  return (
-                    <tr key={m.id} className="hover:bg-white/5 transition">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {profileUrl ? (
-                            <img
-                              src={profileUrl}
-                              alt=""
-                              className="w-8 h-8 rounded-full object-cover"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-red-600/20 flex items-center justify-center text-red-400 text-xs font-bold">
-                              {m.firstname?.[0]}{m.lastname?.[0]}
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-gray-200">{m.firstname} {m.lastname}</p>
-                            <p className="text-xs text-gray-400">{m.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          m.membership_fee?.payment_status === 'paid'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
-                        }`}>
-                          {m.membership_fee?.payment_status || 'N/A'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-300">
-                        {m.created_at ? new Date(m.created_at).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 flex justify-end gap-2">
+                members.map((member) => (
+                  <tr key={member.id} className="hover:bg-gray-700/20 transition">
+                    <td className="px-4 py-3">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold overflow-hidden">
+                        {member.profile ? (
+                          <img src={`http://localhost:8000/storage/${member.profile}`} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          member.firstname.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-white">
+                      {member.firstname} {member.lastname}
+                      {member.suffix && ` ${member.suffix}`}
+                    </td>
+                    <td className="px-4 py-3 text-gray-300">{member.email}</td>
+                    <td className="px-4 py-3 text-gray-300">+63{member.contact}</td>
+                    <td className="px-4 py-3 text-gray-300 capitalize">{member.sex}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${member.membership_status === 'active' ? 'bg-green-600/30 text-green-300' : 'bg-red-600/30 text-red-300'}`}>
+                        {member.membership_status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${member.contract_status === 'active' ? 'bg-green-600/30 text-green-300' : 'bg-red-600/30 text-red-300'}`}>
+                        {member.contract_status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => openProfileModal(m)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 transition"
-                          title="View Profile"
+                          onClick={() => openView(member)}
+                          className="text-blue-400 hover:text-blue-300"
+                          title="View"
                         >
-                          <Eye size={16} />
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
                         </button>
                         <button
-                          onClick={() => openEditModal(m)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 transition"
+                          onClick={() => openUpdate(member)}
+                          className="text-yellow-400 hover:text-yellow-300"
                           title="Edit"
                         >
-                          <Edit2 size={16} />
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
                         </button>
                         <button
-                          onClick={() => handleDelete(m.id)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                          onClick={() => openDelete(member)}
+                          className="text-red-400 hover:text-red-300"
                           title="Delete"
                         >
-                          <Trash2 size={16} />
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {pagination && pagination.last_page > 1 && (
+          <div className="flex items-center justify-between mt-4 text-sm text-gray-400">
+            <span>
+              Showing {pagination.current_page} of {pagination.last_page} pages
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handlePageChange(pagination.current_page - 1)}
+                disabled={pagination.current_page === 1}
+                className="px-3 py-1 bg-[#1e242c] rounded-lg disabled:opacity-50 hover:bg-gray-700/30 transition"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => handlePageChange(pagination.current_page + 1)}
+                disabled={pagination.current_page === pagination.last_page}
+                className="px-3 py-1 bg-[#1e242c] rounded-lg disabled:opacity-50 hover:bg-gray-700/30 transition"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modals */}
+        <CreateMemberModal
+          isOpen={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onSuccess={fetchMembers}
+        />
+        <UpdateMemberModal
+          isOpen={updateOpen}
+          onClose={() => { setUpdateOpen(false); setSelectedMember(null); }}
+          onSuccess={fetchMembers}
+          member={selectedMember}
+        />
+        <ViewMemberModal
+          isOpen={viewOpen}
+          onClose={() => { setViewOpen(false); setSelectedMember(null); }}
+          member={selectedMember}
+        />
+        <DeleteMemberModal
+          isOpen={deleteOpen}
+          onClose={() => { setDeleteOpen(false); setSelectedMember(null); }}
+          onSuccess={fetchMembers}
+          member={selectedMember}
+        />
       </div>
-
-      {/* Modals */}
-      <MemberFormModal
-        isOpen={showCreateModal}
-        onClose={() => { setShowCreateModal(false); resetForm(); }}
-        mode="create"
-        formData={formData}
-        handleChange={handleChange}
-        handleFileChange={handleFileChange}
-        handleSubmit={handleCreate}
-        pricingOptions={pricingOptions}
-        isSubmitting={isSubmitting}
-        preview={preview}
-        qrCode={qrCode}
-        errors={errors}
-        membershipFee={membershipFee}
-      />
-      <MemberFormModal
-        isOpen={showEditModal}
-        onClose={() => { setShowEditModal(false); resetForm(); }}
-        mode="edit"
-        formData={formData}
-        handleChange={handleChange}
-        handleFileChange={handleFileChange}
-        handleSubmit={handleUpdate}
-        pricingOptions={pricingOptions}
-        isSubmitting={isSubmitting}
-        preview={preview}
-        qrCode={qrCode}
-        errors={errors}
-        membershipFee={membershipFee}
-      />
-      <ProfileModal
-        isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        member={selectedMember}
-        storageUrl={STORAGE_URL}
-      />
-
-      <style>{`
-        .input {
-          @apply w-full bg-black/40 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition;
-        }
-        .input:disabled {
-          @apply opacity-50 cursor-not-allowed;
-        }
-      `}</style>
-    </div>
+    </AdminLayout>
   );
 };
-
-export default Members;

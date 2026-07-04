@@ -3,18 +3,13 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
-interface NavGroup {
-  title: string;
-  items: { label: string; path: string }[];
-}
-
-const navGroups: NavGroup[] = [
+const navGroups = [
   {
     title: 'Management',
     items: [
       { label: 'Members', path: '/dashboard/members' },
       { label: 'Contracts', path: '/dashboard/contracts' },
-      { label: 'System Settings', path: '/dashboard/system-settings' },
+      // System Settings omitted for cashier
     ],
   },
   {
@@ -34,7 +29,7 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const CashierLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [openGroups, setOpenGroups] = useState<string[]>(['Management', 'Sales', 'Attendance']);
@@ -64,14 +59,14 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
       <aside className="w-64 bg-[#14181f] border-r border-gray-700/50 flex flex-col h-screen sticky top-0">
         {/* Large Profile */}
         <div className="p-4 border-b border-gray-700/30 flex items-center gap-3">
-          <div className="h-14 w-14 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg flex-shrink-0">
-            {user?.name?.charAt(0).toUpperCase() || 'A'}
+          <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg flex-shrink-0">
+            {user?.name?.charAt(0).toUpperCase() || 'C'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white font-semibold truncate">{user?.name}</p>
             <p className="text-gray-400 text-sm truncate">{user?.email}</p>
-            <span className="inline-block mt-0.5 px-2 py-0.5 bg-red-600/30 text-red-300 rounded-full text-xs font-medium">
-              ADMIN
+            <span className="inline-block mt-0.5 px-2 py-0.5 bg-blue-600/30 text-blue-300 rounded-full text-xs font-medium">
+              CASHIER
             </span>
           </div>
         </div>
@@ -84,7 +79,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
             className={({ isActive }) =>
               `block px-3 py-2 text-sm rounded-lg transition mb-2 ${
                 isActive
-                  ? 'bg-red-600/20 text-white font-medium'
+                  ? 'bg-blue-600/20 text-white font-medium'
                   : 'text-gray-400 hover:text-white hover:bg-gray-700/30'
               }`
             }
@@ -120,7 +115,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
                         className={({ isActive }) =>
                           `block px-3 py-2 text-sm rounded-lg transition ${
                             isActive
-                              ? 'bg-red-600/20 text-white'
+                              ? 'bg-blue-600/20 text-white'
                               : 'text-gray-400 hover:text-white hover:bg-gray-700/30'
                           }`
                         }
@@ -135,7 +130,7 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
           })}
         </nav>
 
-        {/* Logout button at bottom */}
+        {/* Logout button */}
         <div className="p-3 border-t border-gray-700/30">
           <button
             onClick={handleLogout}
