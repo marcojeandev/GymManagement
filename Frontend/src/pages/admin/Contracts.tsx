@@ -33,18 +33,12 @@ export const ContractsPage = () => {
   const fetchMembers = async () => {
     setLoading(true);
     try {
-      const membersResponse = await memberApi.getMembers({ 
-        search, 
-        per_page: 10, 
-        page 
-      });
+      const membersResponse = await memberApi.getMembers({ search, per_page: 10, page });
       const membersData = membersResponse.data;
 
-      // Fetch contracts to get latest range
       const contractsResponse = await contractApi.getContracts({ per_page: 1000 });
       const allContracts: Contract[] = contractsResponse?.data || [];
 
-      // Group and find latest contract for each member
       const latestContractMap = new Map<number, string>();
       allContracts.forEach(contract => {
         const memberId = contract.members_id;
@@ -53,7 +47,6 @@ export const ContractsPage = () => {
         if (!current) {
           latestContractMap.set(memberId, newRange);
         } else {
-          // Compare by contract_to (or created_at fallback)
           const existingDate = current ? new Date(current.split('→')[1]?.trim() || 0) : new Date(0);
           const newDate = contract.contract_to ? new Date(contract.contract_to) : new Date(0);
           if (newDate > existingDate) {
@@ -108,12 +101,13 @@ export const ContractsPage = () => {
 
   const handleSuccess = () => {
     fetchMembers();
+    setCreateOpen(false);
+    setCreateForMember(null);
   };
 
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
-        {/* Shiny Header */}
         <div className="flex items-center justify-between mb-8 flex-wrap gap-2">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
             Contracts Management
@@ -127,7 +121,6 @@ export const ContractsPage = () => {
           </button>
         </div>
 
-        {/* Search Bar – Shiny */}
         <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 mb-6 shadow-xl shadow-red-500/5">
           <div className="flex gap-4 items-end">
             <div className="flex-1 min-w-[200px] relative">
@@ -146,7 +139,6 @@ export const ContractsPage = () => {
           </div>
         </div>
 
-        {/* Table – Shiny */}
         <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 overflow-hidden shadow-xl shadow-red-500/5">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -161,7 +153,6 @@ export const ContractsPage = () => {
               </thead>
               <tbody className="divide-y divide-gray-700/30">
                 {loading ? (
-                  // Skeleton loading
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
                       <td className="px-4 py-3"><div className="h-4 bg-gray-700/40 rounded w-24"></div></td>
@@ -221,35 +212,23 @@ export const ContractsPage = () => {
           </div>
         </div>
 
-        {/* Pagination – Shiny */}
         {pagination && pagination.last_page > 1 && (
           <div className="flex items-center justify-between mt-6 text-sm text-gray-400">
             <span>Page {pagination.current_page} of {pagination.last_page}</span>
             <div className="flex gap-2">
-              <button 
-                onClick={() => handlePageChange(pagination.current_page - 1)} 
-                disabled={pagination.current_page === 1} 
-                className="px-4 py-1.5 bg-[#1e242c] rounded-lg disabled:opacity-50 hover:bg-gray-700/30 transition border border-gray-700/30"
-              >
-                Previous
-              </button>
-              <button 
-                onClick={() => handlePageChange(pagination.current_page + 1)} 
-                disabled={pagination.current_page === pagination.last_page} 
-                className="px-4 py-1.5 bg-[#1e242c] rounded-lg disabled:opacity-50 hover:bg-gray-700/30 transition border border-gray-700/30"
-              >
-                Next
-              </button>
+              <button onClick={() => handlePageChange(pagination.current_page - 1)} disabled={pagination.current_page === 1} className="px-4 py-1.5 bg-[#1e242c] rounded-lg disabled:opacity-50 hover:bg-gray-700/30 transition border border-gray-700/30">Previous</button>
+              <button onClick={() => handlePageChange(pagination.current_page + 1)} disabled={pagination.current_page === pagination.last_page} className="px-4 py-1.5 bg-[#1e242c] rounded-lg disabled:opacity-50 hover:bg-gray-700/30 transition border border-gray-700/30">Next</button>
             </div>
           </div>
         )}
 
-        {/* Modals */}
+        {/* Modals – FIXED props and key */}
         <CreateContractModal
+          key={createForMember?.id || 'global'}
           isOpen={createOpen}
           onClose={() => { setCreateOpen(false); setCreateForMember(null); }}
           onSuccess={handleSuccess}
-          initialMemberId={createForMember?.id}
+          initialMember={createForMember} // <-- pass full object
         />
         <MemberContractsModal
           isOpen={viewOpen}

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('membership_pricing', function (Blueprint $table) {
             $table->id();
             $table->decimal('price',10,2);
-            $table->text('description');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

@@ -13,7 +13,14 @@ return new class extends Migration
     {
         Schema::create('walk_in_attendance', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('walk_in_id')->constrained('walk_in_info')->onDelete('cascade');
+            $table->foreignId('walk_in_id')
+                  ->nullable()
+                  ->constrained('walk_in_info')
+                  ->onDelete('cascade');
+            $table->foreignId('members_id')
+                  ->nullable()
+                  ->constrained('members')
+                  ->onDelete('cascade');
             $table->datetime('time_in');
             $table->decimal('fee_paid', 10, 2);
             $table->timestamps();

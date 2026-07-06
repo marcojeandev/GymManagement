@@ -61,4 +61,15 @@ class Member extends Model
         return $this->hasOne(Contract::class, 'members_id')
             ->orderBy('contract_to', 'desc');
     }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'members_id');
+    }
+
+    // Check if member can clock in
+    public function canClockIn(): bool
+    {
+        return $this->membership_status === 'active' && $this->contract_status === 'active';
+    }
 }

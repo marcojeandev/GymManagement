@@ -14,7 +14,6 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Members', path: '/dashboard/members' },
       { label: 'Contracts', path: '/dashboard/contracts' },
-      { label: 'System Settings', path: '/dashboard/system-settings' },
     ],
   },
   {
@@ -32,12 +31,25 @@ const navGroups: NavGroup[] = [
       { label: 'Walk-in Attendance', path: '/dashboard/walk-in-attendance' },
     ],
   },
+  {
+    title: 'Reports',
+    items: [
+      { label: 'Reports & Analytics', path: '/dashboard/reports' },
+    ],
+  },
+  {
+    title: 'Administration',
+    items: [
+      { label: 'Account Management', path: '/dashboard/account-management' },
+      { label: 'System Settings', path: '/dashboard/system-settings' },
+    ],
+  },
 ];
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [openGroups, setOpenGroups] = useState<string[]>(['Management', 'Sales', 'Attendance']);
+  const [openGroups, setOpenGroups] = useState<string[]>(['Management', 'Sales', 'Attendance', 'Reports', 'Administration']);
 
   const toggleGroup = (title: string) => {
     setOpenGroups((prev) =>

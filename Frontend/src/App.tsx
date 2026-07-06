@@ -10,6 +10,13 @@ import { SystemSettingsPage } from './pages/admin/SystemSettings';
 import { useEffect, useState } from 'react';
 import { checkSystemStatus } from './services/api';
 import { ContractsPage } from './pages/admin/Contracts';
+import { ProductsPage } from './pages/admin/Products';
+import { SalesPage } from './pages/admin/Sales';
+import { WalkinsPage } from './pages/admin/Walkins';
+import { WalkinAttendancePage } from './pages/admin/WalkinAttendance';
+import { AttendancePage } from './pages/admin/Attendance';
+import { AccountManagementPage } from './pages/admin/AccountManagement';
+import { ReportsPage } from './pages/admin/Reports';
 
 function SystemGuard({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'configured' | 'unconfigured'>('loading');
@@ -29,55 +36,19 @@ function SystemGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (status === 'unconfigured' && window.location.pathname !== '/setup') {
+  if (status === 'unconfigured') {
     return <Navigate to="/setup" replace />;
   }
 
-  if (status === 'configured' && window.location.pathname === '/setup') {
-    return <Navigate to="/login" replace />;
-  }
-
+  // If configured, allow access
   return <>{children}</>;
 }
 
-function AppRoutes() {
+function ProtectedSystemRoute({ element }: { element: React.ReactElement }) {
   return (
-    <Routes>
-      <Route path="/setup" element={<Setup />} />
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardRouter />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/members"
-        element={
-          <ProtectedRoute>
-            <MembersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/system-settings"
-        element={
-          <ProtectedRoute>
-            <SystemSettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/dashboard/contracts"
-        element={
-          <ProtectedRoute>
-            <ContractsPage />
-          </ProtectedRoute>
-          } 
-        />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+    <ProtectedRoute>
+      <SystemGuard>{element}</SystemGuard>
+    </ProtectedRoute>
   );
 }
 
@@ -85,9 +56,27 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <SystemGuard>
-          <AppRoutes />
-        </SystemGuard>
+        <Routes>
+          {/* Setup and Login are ALWAYS accessible (no guard) */}
+          <Route path="/setup" element={<Setup />} />
+          <Route path="/login" element={<Login />} />
+
+          {/* Protected routes – require auth and system configured */}
+          <Route path="/dashboard" element={<ProtectedSystemRoute element={<DashboardRouter />} />} />
+          <Route path="/dashboard/members" element={<ProtectedSystemRoute element={<MembersPage />} />} />
+          <Route path="/dashboard/system-settings" element={<ProtectedSystemRoute element={<SystemSettingsPage />} />} />
+          <Route path="/dashboard/contracts" element={<ProtectedSystemRoute element={<ContractsPage />} />} />
+          <Route path="/dashboard/products" element={<ProtectedSystemRoute element={<ProductsPage />} />} />
+          <Route path="/dashboard/sales" element={<ProtectedSystemRoute element={<SalesPage />} />} />
+          <Route path="/dashboard/walk-in" element={<ProtectedSystemRoute element={<WalkinsPage />} />} />
+          <Route path="/dashboard/walk-in-attendance" element={<ProtectedSystemRoute element={<WalkinAttendancePage />} />} />
+          <Route path="/dashboard/attendance" element={<ProtectedSystemRoute element={<AttendancePage />} />} />
+          <Route path="/dashboard/account-management" element={<ProtectedSystemRoute element={<AccountManagementPage />} />} />
+          <Route path="/dashboard/reports" element={<ProtectedSystemRoute element={<ReportsPage />} />} />
+
+          {/* Redirect any unknown routes to dashboard */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
         <Toaster
           position="top-right"
           toastOptions={{

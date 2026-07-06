@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../services/api';
+import api, { checkSystemStatus } from '../services/api';
 
 // Utility: validate Philippine mobile number (11 digits starting with 9)
 const validatePhone = (value: string) => {
@@ -12,11 +12,12 @@ const validatePhone = (value: string) => {
 export const Setup = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [form, setForm] = useState({
     gym_name: '',
     description: '',
     email: '',
-    contact: '', // user will input 11 digits (e.g., 91234567890)
+    contact: '',
     logo: null as File | null,
     admin_name: '',
     admin_email: '',
@@ -24,6 +25,19 @@ export const Setup = () => {
     admin_password_confirmation: '',
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  // Check if already configured and redirect
+  useEffect(() => {
+    checkSystemStatus()
+      .then((res) => {
+        if (res.configured) {
+          navigate('/login', { replace: true });
+        }
+      })
+      .finally(() => {
+        setChecking(false);
+      });
+  }, [navigate]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -40,7 +54,6 @@ export const Setup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate contact (if provided)
     if (form.contact && !validatePhone(form.contact)) {
       toast.error('Contact must be 11 digits starting with 9 (e.g., 91234567890)');
       return;
@@ -72,13 +85,20 @@ export const Setup = () => {
       const msg = error.response?.data?.message || 'Setup failed.';
       toast.error(msg);
       if (error.response?.status === 403) {
-        // System already configured – redirect to login
         navigate('/login');
       }
     } finally {
       setLoading(false);
     }
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-[#0b0d10] flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0b0d10] p-4">

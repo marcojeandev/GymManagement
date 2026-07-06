@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->string('paid_by');
+            $table->decimal('payment_amount', 10, 2)->nullable();
             $table->enum('payment_type', ['cash', 'gcash']);
             $table->string('or_number');
             $table->string('transaction_id')->nullable();

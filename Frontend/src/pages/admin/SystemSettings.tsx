@@ -3,7 +3,7 @@ import { AdminLayout } from '../../layouts/AdminLayout';
 import { systemSettingsApi } from '../../services/systemSettingsApi';
 import type { MembershipPrice, ContractPrice, GymSetting } from '../../services/systemSettingsApi';
 import toast from 'react-hot-toast';
-import { Plus, Pencil, Trash2, Save, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, X } from 'lucide-react';
 
 type TabType = 'gym' | 'membership' | 'contract';
 
@@ -52,10 +52,9 @@ export const SystemSettingsPage = () => {
       const [gymData, membershipData, contractData] = await Promise.all([
         systemSettingsApi.getGymSettings(),
         systemSettingsApi.getMembershipPrice(),
-        systemSettingsApi.getContractPrices(), // now returns array
+        systemSettingsApi.getContractPrices(),
       ]);
 
-      // Gym
       if (gymData) {
         setGym(gymData);
         setGymForm({
@@ -73,7 +72,6 @@ export const SystemSettingsPage = () => {
         if (gymData.favicon) setFaviconPreview(`http://localhost:8000/storage/${gymData.favicon}`);
       }
 
-      // Membership
       if (membershipData) {
         setMembership(membershipData);
         setMembershipForm({
@@ -82,7 +80,6 @@ export const SystemSettingsPage = () => {
         });
       }
 
-      // Contract – array
       setContracts(contractData || []);
     } catch (error) {
       toast.error('Failed to load settings');
@@ -243,11 +240,14 @@ export const SystemSettingsPage = () => {
   return (
     <AdminLayout>
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-white mb-8 bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-          System Settings
-        </h2>
+        {/* Shiny header */}
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
+            System Settings
+          </h2>
+        </div>
 
-        {/* Tabs with glow effect */}
+        {/* Tabs */}
         <div className="flex gap-2 mb-8 border-b border-gray-700/50">
           {['gym', 'membership', 'contract'].map((tab) => (
             <button
@@ -329,7 +329,9 @@ export const SystemSettingsPage = () => {
               </div>
               <p className="text-xs text-gray-500 mt-1">11 digits starting with 9</p>
             </div>
-            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Color pickers – commented out as requested */}
+            {/*
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300">Primary Color</label>
                 <div className="flex items-center gap-3 mt-1">
@@ -368,7 +370,8 @@ export const SystemSettingsPage = () => {
                   />
                 </div>
               </div>
-            </div> */}
+            </div>
+            */}
             <div>
               <label className="block text-sm font-medium text-gray-300">Logo</label>
               <input
@@ -455,11 +458,15 @@ export const SystemSettingsPage = () => {
         {/* ========== CONTRACT TAB ========== */}
         {activeTab === 'contract' && (
           <div className="space-y-6">
-            {/* Add new button */}
+            {/* Add button */}
             <div className="flex justify-end">
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all duration-300 shadow-lg shadow-green-600/20"
+                className={`flex items-center gap-2 px-5 py-2.5 ${
+                  showAddForm
+                    ? 'bg-gray-600 hover:bg-gray-700'
+                    : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                } text-white font-medium rounded-lg transition-all duration-300 shadow-lg shadow-green-600/20`}
               >
                 <Plus size={18} />
                 {showAddForm ? 'Cancel' : 'Add Contract Plan'}
@@ -502,7 +509,7 @@ export const SystemSettingsPage = () => {
                   <button
                     onClick={handleAddContract}
                     disabled={saving}
-                    className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition disabled:opacity-70"
+                    className="px-6 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium rounded-lg transition-all duration-300 shadow-lg shadow-green-600/20 disabled:opacity-70"
                   >
                     {saving ? 'Adding...' : 'Add Plan'}
                   </button>
@@ -510,84 +517,90 @@ export const SystemSettingsPage = () => {
               </div>
             )}
 
-            {/* Contract list */}
-            <div className="grid grid-cols-1 gap-4">
+            {/* Contract list – polished cards with hover effects */}
+            <div className="grid grid-cols-1 gap-3">
               {contracts.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-[#14181f] border border-gray-700/50 rounded-2xl p-5 shadow-xl shadow-red-500/5 hover:shadow-red-500/10 transition-all duration-300"
+                  className="bg-[#14181f] border border-gray-700/50 rounded-xl p-4 shadow-md hover:shadow-red-500/5 transition-all duration-300 hover:border-red-500/30"
                 >
                   {editingContractId === item.id ? (
                     // Edit mode
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <input
-                        type="text"
-                        name="title"
-                        value={item.title}
-                        onChange={(e) => handleEditContractChange(e, item.id)}
-                        className="bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-                      />
-                      <input
-                        type="number"
-                        name="price"
-                        value={item.price}
-                        step="0.01"
-                        min="0"
-                        onChange={(e) => handleEditContractChange(e, item.id)}
-                        className="bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-                      />
-                      <input
-                        type="text"
-                        name="description"
-                        value={item.description}
-                        onChange={(e) => handleEditContractChange(e, item.id)}
-                        className="bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-                      />
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input
+                          type="text"
+                          name="title"
+                          value={item.title}
+                          onChange={(e) => handleEditContractChange(e, item.id)}
+                          className="bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                        />
+                        <input
+                          type="number"
+                          name="price"
+                          value={item.price}
+                          step="0.01"
+                          min="0"
+                          onChange={(e) => handleEditContractChange(e, item.id)}
+                          className="bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                        />
+                        <input
+                          type="text"
+                          name="description"
+                          value={item.description}
+                          onChange={(e) => handleEditContractChange(e, item.id)}
+                          className="bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleUpdateContract(item.id)}
+                          disabled={saving}
+                          className="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition disabled:opacity-70"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingContractId(null)}
+                          className="px-4 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    // View mode
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div>
+                    // View mode – table‑like row
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex-1 min-w-[180px]">
                         <h4 className="text-white font-semibold text-lg">{item.title}</h4>
-                        <p className="text-gray-400">₱{item.price} | {item.description}</p>
+                        <p className="text-gray-400 text-sm">
+                          ₱{item.price} · {item.description}
+                        </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => setEditingContractId(item.id)}
                           className="p-2 bg-yellow-600/20 hover:bg-yellow-600/40 text-yellow-400 rounded-lg transition"
+                          title="Edit"
                         >
-                          <Pencil size={18} />
+                          <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteContract(item.id)}
                           className="p-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg transition"
+                          title="Delete"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
-                    </div>
-                  )}
-                  {editingContractId === item.id && (
-                    <div className="flex justify-end mt-3 gap-2">
-                      <button
-                        onClick={() => handleUpdateContract(item.id)}
-                        disabled={saving}
-                        className="px-4 py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg transition disabled:opacity-70"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingContractId(null)}
-                        className="px-4 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
-                      >
-                        Cancel
-                      </button>
                     </div>
                   )}
                 </div>
               ))}
               {contracts.length === 0 && (
-                <div className="text-center text-gray-400 py-8">No contract plans yet. Click "Add Contract Plan" to create one.</div>
+                <div className="text-center text-gray-400 py-10 bg-[#14181f] rounded-2xl border border-gray-700/30">
+                  No contract plans yet. Click <span className="text-green-400">"Add Contract Plan"</span> to create one.
+                </div>
               )}
             </div>
           </div>
