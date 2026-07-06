@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\SalesController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\WalkinInfoController;
 use App\Http\Controllers\Admin\ReportsController;
+use App\Http\Controllers\SettingsController as PublicSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GymSettingController;
 use Illuminate\Http\Request;
@@ -90,4 +91,6 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])
             Route::get('attendance-distribution', [ReportsController::class, 'attendanceDistribution']);
             Route::get('revenue', [ReportsController::class, 'revenueBreakdown']);
         });
+
+        Route::get('/gym-icon', [PublicSettingsController::class, 'getGymIcon']);
     });

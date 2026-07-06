@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { Menu, X } from 'lucide-react';
 
 const navGroups = [
   {
@@ -33,6 +34,7 @@ export const CashierLayout: React.FC<{ children: React.ReactNode }> = ({ childre
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [openGroups, setOpenGroups] = useState<string[]>(['Management', 'Sales', 'Attendance']);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleGroup = (title: string) => {
     setOpenGroups((prev) =>
@@ -54,9 +56,30 @@ export const CashierLayout: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0d10] flex">
+    <div className="min-h-screen bg-[#0b0d10] flex flex-col md:flex-row">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-[#14181f] border-b border-gray-700/50 p-4 flex items-center justify-between sticky top-0 z-20">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-lg font-bold text-white shadow-lg">
+            {user?.name?.charAt(0).toUpperCase() || 'C'}
+          </div>
+          <span className="text-white font-semibold">{user?.name}</span>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-gray-300 hover:text-white">
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Overlay for mobile */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-[#14181f] border-r border-gray-700/50 flex flex-col h-screen sticky top-0">
+      <aside className={`${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:sticky top-0 z-40 w-64 bg-[#14181f] border-r border-gray-700/50 flex flex-col h-screen transition-transform duration-300 ease-in-out`}>
         {/* Large Profile */}
         <div className="p-4 border-b border-gray-700/30 flex items-center gap-3">
           <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg flex-shrink-0">
@@ -145,7 +168,7 @@ export const CashierLayout: React.FC<{ children: React.ReactNode }> = ({ childre
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 w-full max-w-full">
         {children}
       </main>
     </div>

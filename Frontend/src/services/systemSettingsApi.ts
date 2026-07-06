@@ -38,9 +38,19 @@ export interface GymSetting {
 
 export const systemSettingsApi = {
   // ---------- GYM ----------
-  async getGymSettings(): Promise<GymSetting | null> {
+ async getGymSettings(): Promise<GymSetting | null> {
+  try {
+    const response = await api.get('/admin/gym-settings');
+    return response.data.data;
+  } catch (error) {
+    console.warn('Backend unavailable, using fallback settings');
+    return null; // or return default settings
+  }
+},
+
+  async getPublicSettings(): Promise<GymSetting | null> {
     try {
-      const response = await api.get('/admin/gym-settings');
+      const response = await api.get('/settings');
       return response.data.data;
     } catch {
       return null;

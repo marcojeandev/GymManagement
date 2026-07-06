@@ -30,12 +30,4 @@ class GymSetting extends Model
         'features' => 'array',
         'pricing' => 'array',
     ];
-
-    public static function getSettings()
-    {
-        return self::first() ?? self::create([
-            'gym_name' => 'Iron Forge Gym',
-            'description' => 'Transform your body. Transform your life.',
-        ]);
-    }
 }

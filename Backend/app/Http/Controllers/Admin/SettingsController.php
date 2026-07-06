@@ -190,4 +190,45 @@ public function deleteContractPrice(ContractPrice $contractPrice)
         ], 500);
     }
 }
+
+    /**
+     * Serve the gym logo/favicon from storage or fallback.
+     */
+    public function getGymIcon()
+    {
+        $settings = GymSetting::first();
+        $iconPath = null;
+
+        if ($settings) {
+            if ($settings->favicon) {
+                $iconPath = storage_path('app/public/' . $settings->favicon);
+            } elseif ($settings->logo) {
+                $iconPath = storage_path('app/public/' . $settings->logo);
+            }
+        }
+
+        if ($iconPath && file_exists($iconPath)) {
+            $mimeType = mime_content_type($iconPath) ?: 'image/png';
+            return response()->file($iconPath, [
+                'Content-Type' => $mimeType,
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        }
+
+        // Fallback to favicon.ico in the public directory if it exists
+        $defaultFavicon = public_path('favicon.ico');
+        if (file_exists($defaultFavicon)) {
+            return response()->file($defaultFavicon, [
+                'Content-Type' => 'image/x-icon',
+                'Cache-Control' => 'public, max-age=86400',
+            ]);
+        }
+
+        // Fallback: Default SVG placeholder
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100"><circle cx="50" cy="50" r="50" fill="#ef4444"/><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="32">GYM</text></svg>';
+        return response($svg, 200, [
+            'Content-Type' => 'image/svg+xml',
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
 }
