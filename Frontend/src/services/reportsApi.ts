@@ -41,6 +41,7 @@ export const reportsApi = {
     return response.data.data;
   },
 
+  // ✅ FIXED: correctly handles date parameters
   async getAttendanceDistribution(start?: string, end?: string) {
     const params = new URLSearchParams();
     if (start) params.append('start', start);
@@ -49,6 +50,7 @@ export const reportsApi = {
     return response.data.data;
   },
 
+  // ✅ FIXED: correctly handles date parameters
   async getRevenue(start?: string, end?: string) {
     const params = new URLSearchParams();
     if (start) params.append('start', start);

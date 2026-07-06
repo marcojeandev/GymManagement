@@ -17,7 +17,7 @@ use Carbon\Carbon;
 class ReportsController extends Controller
 {
     /**
-     * Dashboard overview statistics
+     * Overview statistics
      */
     public function overview(Request $request)
     {
@@ -25,55 +25,37 @@ class ReportsController extends Controller
         $thisMonth = Carbon::now()->startOfMonth();
         $thisYear = Carbon::now()->startOfYear();
 
-        $totalMembers = Member::count();
-        $activeMembers = Member::where('membership_status', 'active')->count();
-        $expiredMembers = Member::where('membership_status', 'expired')->count();
-
-        $activeContracts = Contract::where('contract_to', '>=', $today)->count();
-
-        $salesToday = Sale::whereDate('created_at', $today)->sum('payment_amount');
-        $salesThisMonth = Sale::where('created_at', '>=', $thisMonth)->sum('payment_amount');
-        $salesThisYear = Sale::where('created_at', '>=', $thisYear)->sum('payment_amount');
-
-        $attendanceToday = Attendance::whereDate('time_in', $today)->count();
-        $attendanceThisMonth = Attendance::where('time_in', '>=', $thisMonth)->count();
-
-        $walkinToday = WalkinAttendance::whereDate('time_in', $today)->count();
-        $walkinThisMonth = WalkinAttendance::where('time_in', '>=', $thisMonth)->count();
-
-        $totalWalkins = WalkinInfo::count();
-
         return response()->json([
             'status' => 1,
             'data' => [
                 'members' => [
-                    'total' => $totalMembers,
-                    'active' => $activeMembers,
-                    'expired' => $expiredMembers,
+                    'total' => Member::count(),
+                    'active' => Member::where('membership_status', 'active')->count(),
+                    'expired' => Member::where('membership_status', 'expired')->count(),
                 ],
                 'contracts' => [
-                    'active' => $activeContracts,
+                    'active' => Contract::where('contract_to', '>=', $today)->count(),
                 ],
                 'sales' => [
-                    'today' => (float) $salesToday,
-                    'this_month' => (float) $salesThisMonth,
-                    'this_year' => (float) $salesThisYear,
+                    'today' => (float) Sale::whereDate('created_at', $today)->sum('payment_amount'),
+                    'this_month' => (float) Sale::where('created_at', '>=', $thisMonth)->sum('payment_amount'),
+                    'this_year' => (float) Sale::where('created_at', '>=', $thisYear)->sum('payment_amount'),
                 ],
                 'attendance' => [
-                    'today' => $attendanceToday,
-                    'this_month' => $attendanceThisMonth,
+                    'today' => Attendance::whereDate('time_in', $today)->count(),
+                    'this_month' => Attendance::where('time_in', '>=', $thisMonth)->count(),
                 ],
                 'walkins' => [
-                    'total' => $totalWalkins,
-                    'today' => $walkinToday,
-                    'this_month' => $walkinThisMonth,
+                    'total' => WalkinInfo::count(),
+                    'today' => WalkinAttendance::whereDate('time_in', $today)->count(),
+                    'this_month' => WalkinAttendance::where('time_in', '>=', $thisMonth)->count(),
                 ],
             ],
         ]);
     }
 
     /**
-     * Member growth over time (monthly new members)
+     * Member growth (monthly)
      */
     public function memberGrowth(Request $request)
     {
@@ -101,22 +83,18 @@ class ReportsController extends Controller
 
         return response()->json([
             'status' => 1,
-            'data' => [
-                'labels' => $labels,
-                'values' => $values,
-            ],
+            'data' => ['labels' => $labels, 'values' => $values],
         ]);
     }
 
     /**
-     * Sales trend (daily sales for last N days) – FIXED
+     * Sales trend (daily)
      */
     public function salesTrend(Request $request)
     {
         $days = $request->input('days', 30);
         $startDate = Carbon::now()->subDays($days)->startOfDay();
 
-        // Get actual data from database
         $data = Sale::select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('COALESCE(SUM(payment_amount), 0) as total')
@@ -127,34 +105,17 @@ class ReportsController extends Controller
         ->get()
         ->keyBy('date');
 
-        // Build array with all days in the range, fill missing with 0
-        $allDates = collect();
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i)->toDateString();
-            $allDates[$date] = 0;
-        }
-
-        foreach ($data as $date => $row) {
-            $allDates[$date] = (float) $row->total;
-        }
-
-        // Build labels and values
         $labels = [];
         $values = [];
-        foreach ($allDates as $date => $total) {
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->toDateString();
             $labels[] = Carbon::parse($date)->format('M d');
-            $values[] = $total;
+            $values[] = (float) ($data[$date]->total ?? 0);
         }
-
-        // Debug log (optional)
-        \Log::info('SalesTrend result', ['labels' => $labels, 'values' => $values]);
 
         return response()->json([
             'status' => 1,
-            'data' => [
-                'labels' => $labels,
-                'values' => $values,
-            ],
+            'data' => ['labels' => $labels, 'values' => $values],
         ]);
     }
 
@@ -184,7 +145,7 @@ class ReportsController extends Controller
     }
 
     /**
-     * Attendance trend (daily attendance for last N days)
+     * Attendance trend (daily)
      */
     public function attendanceTrend(Request $request)
     {
@@ -201,38 +162,26 @@ class ReportsController extends Controller
         ->get()
         ->keyBy('date');
 
-        $allDates = collect();
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i)->toDateString();
-            $allDates[$date] = 0;
-        }
-
-        foreach ($data as $date => $row) {
-            $allDates[$date] = $row->count;
-        }
-
         $labels = [];
         $values = [];
-        foreach ($allDates as $date => $count) {
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->toDateString();
             $labels[] = Carbon::parse($date)->format('M d');
-            $values[] = $count;
+            $values[] = (int) ($data[$date]->count ?? 0);
         }
 
         return response()->json([
             'status' => 1,
-            'data' => [
-                'labels' => $labels,
-                'values' => $values,
-            ],
+            'data' => ['labels' => $labels, 'values' => $values],
         ]);
     }
 
     /**
-     * Sales by payment type – FIXED with fallback
+     * Sales by payment type
      */
-    public function salesByPaymentType(Request $request)
+    public function salesByPaymentType()
     {
-        $data = Sale::select(
+        $result = Sale::select(
             'payment_type',
             DB::raw('COUNT(*) as count'),
             DB::raw('COALESCE(SUM(payment_amount), 0) as total')
@@ -240,21 +189,30 @@ class ReportsController extends Controller
         ->groupBy('payment_type')
         ->get();
 
-        // If no data, return a default placeholder to avoid frontend errors
-        if ($data->isEmpty()) {
-            return response()->json([
-                'status' => 1,
-                'data' => [
-                    ['payment_type' => 'cash', 'count' => 0, 'total' => 0],
-                    ['payment_type' => 'gcash', 'count' => 0, 'total' => 0],
-                ],
-            ]);
+        $default = [
+            ['payment_type' => 'cash', 'count' => 0, 'total' => 0],
+            ['payment_type' => 'gcash', 'count' => 0, 'total' => 0],
+        ];
+
+        if ($result->isEmpty()) {
+            return response()->json(['status' => 1, 'data' => $default]);
         }
 
-        return response()->json([
-            'status' => 1,
-            'data' => $data,
-        ]);
+        $map = $result->keyBy('payment_type')->map(function ($item) {
+            return ['count' => $item->count, 'total' => (float) $item->total];
+        })->toArray();
+
+        $merged = [];
+        foreach ($default as $row) {
+            $type = $row['payment_type'];
+            $merged[] = [
+                'payment_type' => $type,
+                'count' => $map[$type]['count'] ?? 0,
+                'total' => $map[$type]['total'] ?? 0,
+            ];
+        }
+
+        return response()->json(['status' => 1, 'data' => $merged]);
     }
 
     /**
@@ -262,17 +220,11 @@ class ReportsController extends Controller
      */
     public function membershipStatusDistribution()
     {
-        $data = Member::select(
-            'membership_status',
-            DB::raw('COUNT(*) as count')
-        )
-        ->groupBy('membership_status')
-        ->get();
+        $data = Member::select('membership_status', DB::raw('COUNT(*) as count'))
+            ->groupBy('membership_status')
+            ->get();
 
-        return response()->json([
-            'status' => 1,
-            'data' => $data,
-        ]);
+        return response()->json(['status' => 1, 'data' => $data]);
     }
 
     /**
@@ -294,15 +246,21 @@ class ReportsController extends Controller
     }
 
     /**
-     * Attendance distribution (member vs walk-in)
+     * ✅ Attendance distribution (member vs walk-in) – FIXED
      */
     public function attendanceDistribution(Request $request)
     {
         $start = $request->input('start', Carbon::now()->startOfMonth()->toDateString());
         $end = $request->input('end', Carbon::now()->toDateString());
 
-        $memberAttendances = Attendance::whereBetween('time_in', [$start, $end])->count();
-        $walkinAttendances = WalkinAttendance::whereBetween('time_in', [$start, $end])->count();
+        // Using whereDate to avoid timezone issues
+        $memberAttendances = Attendance::whereDate('time_in', '>=', $start)
+            ->whereDate('time_in', '<=', $end)
+            ->count();
+
+        $walkinAttendances = WalkinAttendance::whereDate('time_in', '>=', $start)
+            ->whereDate('time_in', '<=', $end)
+            ->count();
 
         return response()->json([
             'status' => 1,
@@ -314,23 +272,22 @@ class ReportsController extends Controller
     }
 
     /**
-     * Revenue breakdown (total revenue from sales)
+     * ✅ Revenue breakdown – FIXED
      */
     public function revenueBreakdown(Request $request)
     {
         $start = $request->input('start', Carbon::now()->startOfMonth()->toDateString());
         $end = $request->input('end', Carbon::now()->toDateString());
 
-        $totalRevenue = Sale::whereBetween('created_at', [$start, $end])->sum('payment_amount');
+        $totalRevenue = Sale::whereDate('created_at', '>=', $start)
+            ->whereDate('created_at', '<=', $end)
+            ->sum('payment_amount');
 
         return response()->json([
             'status' => 1,
             'data' => [
                 'total_revenue' => (float) $totalRevenue,
-                'period' => [
-                    'start' => $start,
-                    'end' => $end,
-                ],
+                'period' => ['start' => $start, 'end' => $end],
             ],
         ]);
     }

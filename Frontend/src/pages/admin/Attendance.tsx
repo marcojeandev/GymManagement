@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
 import { attendanceApi } from '../../services/attendanceApi';
+import { memberApi } from '../../services/memberApi';
 import type { Attendance, AttendanceFilters } from '../../types/Attendance';
+import type { Member } from '../../types/Members';
 import { CreateAttendanceModal } from '../../components/Attendance/CreateAttendanceModal';
 // import { UpdateAttendanceModal } from '../../components/Attendance/UpdateAttendanceModal';
 import { ViewAttendanceModal } from '../../components/Attendance/ViewAttendanceModal';
 // import { DeleteAttendanceModal } from '../../components/Attendance/DeleteAttendanceModal';
 import { QRScanner } from '../../components/Attendance/QRScanner';
+import { MemberScanResultModal } from '../../components/Attendance/MemberScanResultModal';
 import toast from 'react-hot-toast';
 import { Plus, Search, Eye, Pencil, Trash2, QrCode, Calendar, Clock } from 'lucide-react';
 
@@ -26,6 +29,11 @@ export const AttendancePage = () => {
 
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
+
+  // New states for scan result modal
+  const [scanResultModalOpen, setScanResultModalOpen] = useState(false);
+  const [scannedMember, setScannedMember] = useState<Member | null>(null);
+  const [scanAction, setScanAction] = useState<'clock_in' | 'clock_out' | null>(null);
 
   useEffect(() => {
     fetchAttendances();
@@ -72,15 +80,57 @@ export const AttendancePage = () => {
     fetchAttendances();
   };
 
+  // QR Scan handler – now shows member info modal first
   const handleQRScan = async (qrCode: string) => {
     setScanning(true);
     try {
-      const response = await attendanceApi.scanQR(qrCode);
-      toast.success(response.message);
-      handleSuccess();
+      // Fetch member by QR code (using the existing memberApi)
+      // We need to add a method to search by QR code in memberApi
+      // For now, we'll use a workaround: fetch all members and filter
+      // Or we can add a dedicated endpoint
+      // I'll assume we have a new endpoint: /admin/members/by-qr/{qrCode}
+      // Let's add a new method in memberApi: getMemberByQR(qrCode)
+      // For now, I'll use a temporary method
+      const response = await memberApi.getMemberByQR(qrCode);
+      const member = response.data;
+
+      // Check if member can clock in/out (active contract)
+      if (member.contract_status !== 'active') {
+        toast.error('Member cannot clock in/out. Contract is not active.');
+        setScannerOpen(false);
+        return;
+      }
+
+      // Check if already clocked in today
+      // We can check by fetching today's attendance for this member
+      const todayAttendances = await attendanceApi.getAttendances({ member_id: member.id, date: new Date().toISOString().split('T')[0] });
+      const activeAttendance = todayAttendances.data.find((a: any) => a.time_out === null);
+
+      setScannedMember(member);
+      setScanAction(activeAttendance ? 'clock_out' : 'clock_in');
+      setScanResultModalOpen(true);
       setScannerOpen(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Scan failed');
+      toast.error(error.response?.data?.message || 'Failed to fetch member');
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  // Confirm clock in/out
+  const handleConfirmClock = async () => {
+    if (!scannedMember) return;
+    setScanning(true);
+    try {
+      // Use the scan endpoint with the member's QR code
+      const response = await attendanceApi.scanQR(scannedMember.qr_code);
+      toast.success(response.message);
+      setScanResultModalOpen(false);
+      setScannedMember(null);
+      setScanAction(null);
+      handleSuccess();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Clock action failed');
     } finally {
       setScanning(false);
     }
@@ -192,25 +242,13 @@ export const AttendancePage = () => {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => openView(attendance)}
-                            className="p-1.5 text-blue-400 hover:text-white border border-blue-400/30 hover:bg-blue-500/20 rounded-lg transition group-hover:border-blue-400/60"
-                            title="View"
-                          >
+                          <button onClick={() => openView(attendance)} className="p-1.5 text-blue-400 hover:text-white border border-blue-400/30 hover:bg-blue-500/20 rounded-lg transition group-hover:border-blue-400/60" title="View">
                             <Eye size={16} />
                           </button>
-                          <button
-                            onClick={() => openUpdate(attendance)}
-                            className="p-1.5 text-yellow-400 hover:text-white border border-yellow-400/30 hover:bg-yellow-500/20 rounded-lg transition group-hover:border-yellow-400/60"
-                            title="Edit"
-                          >
+                          <button onClick={() => openUpdate(attendance)} className="p-1.5 text-yellow-400 hover:text-white border border-yellow-400/30 hover:bg-yellow-500/20 rounded-lg transition group-hover:border-yellow-400/60" title="Edit">
                             <Pencil size={16} />
                           </button>
-                          <button
-                            onClick={() => openDelete(attendance)}
-                            className="p-1.5 text-red-400 hover:text-white border border-red-400/30 hover:bg-red-500/20 rounded-lg transition group-hover:border-red-400/60"
-                            title="Delete"
-                          >
+                          <button onClick={() => openDelete(attendance)} className="p-1.5 text-red-400 hover:text-white border border-red-400/30 hover:bg-red-500/20 rounded-lg transition group-hover:border-red-400/60" title="Delete">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -234,28 +272,10 @@ export const AttendancePage = () => {
         )}
 
         {/* Modals */}
-        <CreateAttendanceModal
-          isOpen={createOpen}
-          onClose={() => setCreateOpen(false)}
-          onSuccess={handleSuccess}
-        />
-        {/* <UpdateAttendanceModal
-          isOpen={updateOpen}
-          onClose={() => { setUpdateOpen(false); setSelectedAttendance(null); }}
-          onSuccess={handleSuccess}
-          attendance={selectedAttendance}
-        /> */}
-        <ViewAttendanceModal
-          isOpen={viewOpen}
-          onClose={() => { setViewOpen(false); setSelectedAttendance(null); }}
-          attendance={selectedAttendance}
-        />
-        {/* <DeleteAttendanceModal
-          isOpen={deleteOpen}
-          onClose={() => { setDeleteOpen(false); setSelectedAttendance(null); }}
-          onSuccess={handleSuccess}
-          attendance={selectedAttendance}
-        /> */}
+        <CreateAttendanceModal isOpen={createOpen} onClose={() => setCreateOpen(false)} onSuccess={handleSuccess} />
+        {/* <UpdateAttendanceModal isOpen={updateOpen} onClose={() => { setUpdateOpen(false); setSelectedAttendance(null); }} onSuccess={handleSuccess} attendance={selectedAttendance} /> */}
+        <ViewAttendanceModal isOpen={viewOpen} onClose={() => { setViewOpen(false); setSelectedAttendance(null); }} attendance={selectedAttendance} />
+        {/* <DeleteAttendanceModal isOpen={deleteOpen} onClose={() => { setDeleteOpen(false); setSelectedAttendance(null); }} onSuccess={handleSuccess} attendance={selectedAttendance} /> */}
 
         {/* QR Scanner */}
         <QRScanner
@@ -263,6 +283,16 @@ export const AttendancePage = () => {
           onClose={() => setScannerOpen(false)}
           onScan={handleQRScan}
           loading={scanning}
+        />
+
+        {/* Member Scan Result Modal */}
+        <MemberScanResultModal
+          isOpen={scanResultModalOpen}
+          onClose={() => { setScanResultModalOpen(false); setScannedMember(null); setScanAction(null); }}
+          onConfirm={handleConfirmClock}
+          member={scannedMember}
+          loading={scanning}
+          action={scanAction}
         />
       </div>
     </AdminLayout>

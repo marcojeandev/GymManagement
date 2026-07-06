@@ -53,4 +53,9 @@ export const memberApi = {
     const response = await api.get(`/admin/members?${params.toString()}`);
     return response.data.data;
   },
+
+  async getMemberByQR(qrCode: string) {
+    const response = await api.get(`/admin/members/by-qr/${qrCode}`);
+    return response.data;
+  }
 };

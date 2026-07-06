@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Cache; 
 
 class Sale extends Model
 {
@@ -49,5 +50,23 @@ class Sale extends Model
     {
         if ($this->payment_amount === null) return null;
         return max(0, $this->payment_amount - $this->total);
+    }
+
+
+    protected static function booted()
+    {
+        static::saved(function () {
+            Cache::flush(); // For simplicity, you can flush all caches
+            // Or clear specific keys:
+            Cache::forget('reports_overview');
+            Cache::forget('reports_sales_trend_30');
+            Cache::forget('reports_sales_by_payment');
+            Cache::forget('reports_top_products_5');
+            Cache::forget('reports_revenue_*'); // wildcard not supported, so use flush or prefix
+            // Better: use a prefix and clear all with prefix
+        });
+        static::deleted(function () {
+            Cache::flush();
+        });
     }
 }

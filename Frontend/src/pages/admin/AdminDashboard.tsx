@@ -39,7 +39,15 @@ export const AdminDashboard = () => {
         dashboardApi.getSalesTrend(7),
       ]);
 
-      setData(dashboardData);
+      // ✅ Ensure recent_sales is always an array
+      const safeData = {
+        ...dashboardData,
+        recent_sales: Array.isArray(dashboardData.recent_sales) 
+          ? dashboardData.recent_sales 
+          : [],
+      };
+
+      setData(safeData);
 
       // Build chart data from trend
       const chartData = trend.labels.map((label, i) => ({
@@ -54,7 +62,7 @@ export const AdminDashboard = () => {
     }
   };
 
-  // ✅ FIX: Safe currency formatter – handles strings, null, undefined
+  // Safe currency formatter
   const formatCurrency = (value: number | string | null | undefined): string => {
     const num = Number(value);
     if (isNaN(num)) return '₱0.00';

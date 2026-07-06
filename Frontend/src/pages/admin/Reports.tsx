@@ -81,53 +81,17 @@ export const ReportsPage = () => {
         reportsApi.getRevenue(dateRange.start, dateRange.end),
       ]);
 
-      console.log('Raw salesByPaymentData:', salesByPaymentData);
-
-      // 🔥 FIX: Manually aggregate sales if the endpoint returns raw data or null
-      let paymentData: any[] = [];
-      if (salesByPaymentData && Array.isArray(salesByPaymentData) && salesByPaymentData.length > 0) {
-        // Check if the data already has payment_type field (aggregated)
-        if (salesByPaymentData[0].payment_type) {
-          paymentData = salesByPaymentData;
-        } else {
-          // Raw sales data – manually aggregate by payment_type
-          const totals: any = {};
-          salesByPaymentData.forEach((sale: any) => {
-            const type = sale.payment_type || 'unknown';
-            if (!totals[type]) {
-              totals[type] = { count: 0, total: 0 };
-            }
-            totals[type].count += 1;
-            totals[type].total += Number(sale.payment_amount) || 0;
-          });
-          paymentData = Object.entries(totals).map(([payment_type, data]: [string, any]) => ({
-            payment_type,
-            count: data.count,
-            total: data.total,
-          }));
-        }
-      } else {
-        // No data – use fallback with zeros
-        paymentData = [
-          { payment_type: 'cash', count: 0, total: 0 },
-          { payment_type: 'gcash', count: 0, total: 0 },
-        ];
-      }
-
-      console.log('Processed paymentData:', paymentData);
-
       setOverview(overviewData);
       setMemberGrowth(memberGrowthData);
       setSalesTrend(salesTrendData);
       setTopProducts(topProductsData);
       setAttendanceTrend(attendanceTrendData);
-      setSalesByPayment(paymentData);
+      setSalesByPayment(salesByPaymentData || []);
       setMembershipDist(membershipDistData);
       setContractDist(contractDistData);
       setAttendanceDist(attendanceDistData);
       setRevenue(revenueData);
     } catch (error) {
-      console.error('Error fetching reports:', error);
       toast.error('Failed to load reports');
     } finally {
       setLoading(false);
@@ -205,7 +169,7 @@ export const ReportsPage = () => {
     });
     csv += '\n';
 
-    csv += 'ATTENDANCE DISTRIBUTION\n';
+    csv += 'ATTENDANCE DISTRIBUTION (Member vs Walk-in)\n';
     csv += 'Type,Count\n';
     attendanceDist?.forEach((item: any) => {
       csv += `${item.type},${item.count}\n`;
@@ -256,10 +220,16 @@ export const ReportsPage = () => {
     );
   }
 
+  // Ensure payment data exists
+  const paymentData = salesByPayment && salesByPayment.length > 0 ? salesByPayment : [
+    { payment_type: 'cash', count: 0, total: 0 },
+    { payment_type: 'gcash', count: 0, total: 0 },
+  ];
+
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header with Export Buttons */}
         <div className="flex items-center justify-between mb-8 flex-wrap gap-2">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent flex items-center gap-2">
             <TrendingUp className="w-7 h-7 text-red-500" />
@@ -438,14 +408,14 @@ export const ReportsPage = () => {
               </ResponsiveContainer>
             </div>
 
-            {/* Sales by Payment Type – FIXED with manual aggregation */}
+            {/* Sales by Payment Type */}
             {/* <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4">Sales by Payment Type</h3>
-              {salesByPayment && salesByPayment.length > 0 && salesByPayment.some((item: any) => item.total > 0 || item.count > 0) ? (
+              {paymentData.some((item: any) => item.total > 0 || item.count > 0) ? (
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
-                      data={salesByPayment}
+                      data={paymentData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -455,7 +425,7 @@ export const ReportsPage = () => {
                       dataKey="total"
                       nameKey="payment_type"
                     >
-                      {salesByPayment.map((entry: any, index: number) => (
+                      {paymentData.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -499,23 +469,40 @@ export const ReportsPage = () => {
             </div>
           </div>
 
-          {/* Additional Stats */}
+          {/* Additional Stats – FIXED: Attendance Distribution and Revenue */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            {/* Walk-ins Total */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5 print-card">
               <p className="text-gray-400 text-sm">Walk-ins (Total)</p>
               <p className="text-2xl font-bold text-white">{overview?.walkins?.total || 0}</p>
               <p className="text-xs text-gray-500 mt-1">Today: {overview?.walkins?.today || 0}</p>
             </div>
+
+            {/* Attendance (Member vs Walk-in) – ACCURATE */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5 print-card">
               <p className="text-gray-400 text-sm">Attendance (Member vs Walk-in)</p>
               <div className="flex gap-4 mt-1">
-                <span className="text-blue-400">Members: {attendanceDist?.find((d: any) => d.type === 'Members')?.count || 0}</span>
-                <span className="text-yellow-400">Walk-ins: {attendanceDist?.find((d: any) => d.type === 'Walk-ins')?.count || 0}</span>
+                <span className="text-blue-400">
+                  Members: {attendanceDist?.find((d: any) => d.type === 'Members')?.count || 0}
+                </span>
+                <span className="text-yellow-400">
+                  Walk-ins: {attendanceDist?.find((d: any) => d.type === 'Walk-ins')?.count || 0}
+                </span>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {dateRange.start} – {dateRange.end}
+              </p>
             </div>
+
+            {/* Total Revenue (Period) – ACCURATE */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5 print-card">
               <p className="text-gray-400 text-sm">Total Revenue (Period)</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(revenue?.total_revenue || 0)}</p>
+              <p className="text-2xl font-bold text-white">
+                {formatCurrency(revenue?.total_revenue || 0)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {dateRange.start} – {dateRange.end}
+              </p>
             </div>
           </div>
         </div>
