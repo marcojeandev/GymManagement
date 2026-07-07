@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { contractApi } from '../../services/contractApi';
+import { contractApi } from '../../services/admin/contractApi';
 import type { Contract, ContractPricing } from '../../types/Contract';
 
 interface UpdateContractModalProps {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
-import { dashboardApi } from '../../services/dashboardApi';
+import { dashboardApi } from '../../services/admin/dashboardApi';
 import toast from 'react-hot-toast';
 import {
   Users,
@@ -26,7 +26,8 @@ import type { DashboardData, DashboardTrend } from '../../types/Dashboard';
 export const AdminDashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [trendData, setTrendData] = useState<any[]>([]);
+  // ✅ Explicitly type trendData as an array of objects with day and sales
+  const [trendData, setTrendData] = useState<{ day: string; sales: number }[]>([]);
 
   useEffect(() => {
     fetchDashboard();
@@ -34,25 +35,26 @@ export const AdminDashboard = () => {
 
   const fetchDashboard = async () => {
     try {
+      // ✅ Type the resolved values using 'as' to tell TypeScript what we expect
       const [dashboardData, trend] = await Promise.all([
         dashboardApi.getDashboard(),
         dashboardApi.getSalesTrend(7),
-      ]);
+      ]) as [DashboardData, DashboardTrend];
 
       // ✅ Ensure recent_sales is always an array
-      const safeData = {
+      const safeData: DashboardData = {
         ...dashboardData,
-        recent_sales: Array.isArray(dashboardData.recent_sales) 
-          ? dashboardData.recent_sales 
+        recent_sales: Array.isArray(dashboardData.recent_sales)
+          ? dashboardData.recent_sales
           : [],
       };
 
       setData(safeData);
 
-      // Build chart data from trend
-      const chartData = trend.labels.map((label, i) => ({
+      // ✅ Build chart data with explicit types for map parameters
+      const chartData = trend.labels.map((label: string, i: number) => ({
         day: label,
-        sales: trend.values[i] || 0,
+        sales: trend.values[i] ?? 0, // use nullish coalescing for safety
       }));
       setTrendData(chartData);
     } catch (error) {

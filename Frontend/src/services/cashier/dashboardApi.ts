@@ -1,5 +1,5 @@
-import api from './api';
-import type { DashboardData, DashboardTrend } from '../types/Dashboard';
+import api from '.././api';
+import type { DashboardData, DashboardTrend } from '../../types/Dashboard';
 
 export const dashboardApi = {
   /**

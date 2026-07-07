@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
-import { productApi } from '../../services/productApi';
+import { productApi } from '../../services/admin/productApi';
 import type { Product, ProductFilters } from '../../types/Product';
 import { CreateProductModal } from '../../components/Product/CreateProductModal';
 import { UpdateProductModal } from '../../components/Product/UpdateProductModal';

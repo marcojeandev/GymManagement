@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { walkinAttendanceApi } from '../../services/walkinAttendanceApi';
-import { walkinApi } from '../../services/walkinApi';
-import { memberApi } from '../../services/memberApi';
+import { walkinAttendanceApi } from '../../services/admin/walkinAttendanceApi';
+import { walkinApi } from '../../services/admin/walkinApi';
+import { memberApi } from '../../services/admin/memberApi';
 import type { WalkinInfo } from '../../types/WalkinInfo';
 import type { Member } from '../../types/Members';
 import { X } from 'lucide-react';

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { attendanceApi } from '../../services/attendanceApi';
-import { memberApi } from '../../services/memberApi';
+import { attendanceApi } from '../../services/admin/attendanceApi';
+import { memberApi } from '../../services/admin/memberApi';
 import type { Member } from '../../types/Members';
 import { X } from 'lucide-react';
 

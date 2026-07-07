@@ -1,5 +1,5 @@
-import api from './api';
-import type { Contract, ContractFilters, ContractPricing } from '../types/Contract';
+import api from '.././api';
+import type { Contract, ContractFilters, ContractPricing } from '../../types/Contract';
 
 export const contractApi = {
   async getContracts(filters: ContractFilters = {}) {
@@ -8,35 +8,35 @@ export const contractApi = {
     if (filters.payment_status) params.append('payment_status', filters.payment_status);
     if (filters.per_page) params.append('per_page', String(filters.per_page));
     if (filters.page) params.append('page', String(filters.page));
-    const response = await api.get(`/admin/contracts?${params.toString()}`);
+    const response = await api.get(`/cashier/contracts?${params.toString()}`);
     return response.data.data; // returns { data: [...], current_page, last_page, ... }
   },
 
   async getContract(id: number) {
-    const response = await api.get(`/admin/contracts/${id}`);
+    const response = await api.get(`/cashier/contracts/${id}`);
     return response.data.data;
   },
 
   async createContract(data: FormData) {
-    const response = await api.post('/admin/contracts', data, {
+    const response = await api.post('/cashier/contracts', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data.data;
   },
 
   async updateContract(id: number, data: FormData) {
-    const response = await api.post(`/admin/contracts/${id}?_method=PUT`, data, {
+    const response = await api.post(`/cashier/contracts/${id}?_method=PUT`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data.data;
   },
 
   async deleteContract(id: number) {
-    await api.delete(`/admin/contracts/${id}`);
+    await api.delete(`/cashier/contracts/${id}`);
   },
 
   async getContractPricing(): Promise<ContractPricing[]> {
-    const response = await api.get('/admin/contract-prices');
+    const response = await api.get('/cashier/contract-prices');
     return response.data.data;
   },
 };

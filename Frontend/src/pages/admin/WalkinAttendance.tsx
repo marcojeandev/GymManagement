@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
-import { walkinAttendanceApi } from '../../services/walkinAttendanceApi';
+import { walkinAttendanceApi } from '../../services/admin/walkinAttendanceApi';
 import type { WalkinAttendance, WalkinAttendanceFilters } from '../../types/WalkinAttendance';
 import { CreateWalkinAttendanceModal } from '../../components/WalkinAttendance/CreateWalkinAttendanceModal';
 import { UpdateWalkinAttendanceModal } from '../../components/WalkinAttendance/UpdateWalkinAttendanceModal';

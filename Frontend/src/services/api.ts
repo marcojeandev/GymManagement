@@ -27,14 +27,21 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
+      const publicPaths = ['/login', '/setup'];
+      const onPublicPath = publicPaths.includes(window.location.pathname);
+
       localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
-      window.location.href = '/login';
+
+      if (!onPublicPath) {
+        // Full reload is still avoidable — dispatch a custom event
+        // and let AuthContext/App handle navigation via React Router.
+        window.dispatchEvent(new Event('auth:logout'));
+      }
     }
     return Promise.reject(error);
   }
 );
-
 // Check if system is configured (settings exist)
 export const checkSystemStatus = async (): Promise<{ configured: boolean }> => {
   try {

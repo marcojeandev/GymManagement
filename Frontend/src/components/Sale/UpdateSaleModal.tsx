@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { saleApi } from '../../services/saleApi';
-import { productApi } from '../../services/productApi';
+import { saleApi } from '../../services/admin/saleApi';
+import { productApi } from '../../services/admin/productApi';
 import type { Product } from '../../types/Product';
 import type { Sale } from '../../types/Sale';
 import { X, Plus, Trash2 } from 'lucide-react';

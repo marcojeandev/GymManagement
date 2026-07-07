@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import type { Member } from '../../types/Members';
 import { QRCodeSVG } from 'qrcode.react';
 import { X, MapPin, Mail, Phone, User, Calendar, CreditCard } from 'lucide-react';
-import { systemSettingsApi } from '../../services/systemSettingsApi';
-import type { MembershipPrice } from '../../services/systemSettingsApi';
+import { systemSettingsApi } from '../../services/admin/systemSettingsApi';
+import type { MembershipPrice } from '../../services/admin/systemSettingsApi';
 
 interface ViewMemberModalProps {
   isOpen: boolean;

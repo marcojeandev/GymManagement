@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
-import { systemSettingsApi } from '../../services/systemSettingsApi';
-import type { MembershipPrice, ContractPrice, GymSetting } from '../../services/systemSettingsApi';
+import { systemSettingsApi } from '../../services/admin/systemSettingsApi';
+import type { MembershipPrice, ContractPrice, GymSetting } from '../../services/admin/systemSettingsApi';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
-import { memberApi } from '../../services/memberApi';
+import { memberApi } from '../../services/admin/memberApi';
 import type { Member, MemberFilters } from '../../types/Members';
 import { CreateMemberModal } from '../../components/Member/CreateMemberModal';
 import { UpdateMemberModal } from '../../components/Member/UpdateMemberModal';

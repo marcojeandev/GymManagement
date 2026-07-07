@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { memberApi } from '../../services/memberApi';
+import { memberApi } from '../../services/admin/memberApi';
 import api from '../../services/api';
 
 interface MemberSearchSelectProps {

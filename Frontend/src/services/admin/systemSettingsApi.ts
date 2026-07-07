@@ -1,4 +1,4 @@
-import api from './api';
+import api from '.././api';
 
 export interface MembershipPrice {
   id: number;
@@ -40,7 +40,7 @@ export const systemSettingsApi = {
   // ---------- GYM ----------
  async getGymSettings(): Promise<GymSetting | null> {
   try {
-    const response = await api.get('/gym-settings');
+    const response = await api.get('/cashier/gym-settings');
     return response.data.data;
   } catch (error) {
     console.warn('Backend unavailable, using fallback settings');
@@ -58,7 +58,7 @@ export const systemSettingsApi = {
   },
 
   async updateSystemSettings(data: FormData): Promise<GymSetting> {
-    const response = await api.post('/system-settings', data, {
+    const response = await api.post('/cashier/system-settings', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data.data;
@@ -67,7 +67,7 @@ export const systemSettingsApi = {
   // ---------- MEMBERSHIP ----------
   async getMembershipPrice(): Promise<MembershipPrice | null> {
     try {
-      const response = await api.get('/membership-price');
+      const response = await api.get('/cashier/membership-price');
       return response.data.data;
     } catch {
       return null;
@@ -75,34 +75,34 @@ export const systemSettingsApi = {
   },
 
   async updateMembershipPrice(data: { price: number; description: string }): Promise<MembershipPrice> {
-    const response = await api.post('/membership-fee', data);
+    const response = await api.post('/cashier/membership-fee', data);
     return response.data.data;
   },
 
   // ---------- CONTRACT PRICES (full CRUD) ----------
   async getContractPrices(): Promise<ContractPrice[]> {
-    const response = await api.get('/contract-prices');
+    const response = await api.get('/cashier/contract-prices');
     return response.data.data;
   },
 
   async createContractPrice(data: { title: string; price: number; description: string }): Promise<ContractPrice> {
-    const response = await api.post('/contract-prices', data);
+    const response = await api.post('/cashier/contract-prices', data);
     return response.data.data;
   },
 
   async updateContractPrice(id: number, data: Partial<ContractPrice>): Promise<ContractPrice> {
-    const response = await api.put(`/contract-prices/${id}`, data);
+    const response = await api.put(`/cashier/contract-prices/${id}`, data);
     return response.data.data;
   },
 
   async deleteContractPrice(id: number): Promise<void> {
-    await api.delete(`/contract-prices/${id}`);
+    await api.delete(`/cashier/contract-prices/${id}`);
   },
 
   // ---------- DEPRECATED: single contract price (kept for compatibility, but not used) ----------
   async getContractPrice(): Promise<ContractPrice | null> {
     try {
-      const response = await api.get('/contract-prices');
+      const response = await api.get('/cashier/contract-prices');
       return response.data.data;
     } catch {
       return null;

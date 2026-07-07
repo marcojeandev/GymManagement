@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { memberApi } from '../../services/memberApi';
+import { memberApi } from '../../services/admin/memberApi';
 import type { Member } from '../../types/Members';
 import { X, AlertTriangle } from 'lucide-react';
 

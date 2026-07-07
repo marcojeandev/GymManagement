@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
-import { memberApi } from '../../services/memberApi';
-import { contractApi } from '../../services/contractApi';
+import { memberApi } from '../../services/admin/memberApi';
+import { contractApi } from '../../services/admin/contractApi';
 import type { Member } from '../../types/Members';
 import type { Contract } from '../../types/Contract';
 import { CreateContractModal } from '../../components/Contracts/CreateContractModal';

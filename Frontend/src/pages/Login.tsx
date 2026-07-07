@@ -2,26 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import { systemSettingsApi } from '../services/systemSettingsApi';
 
 export const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
-  const [gymLogo, setGymLogo] = useState<string | null>(null);
-  const [gymName, setGymName] = useState('Gym Management');
-
-  useEffect(() => {
-    systemSettingsApi.getGymSettings().then((settings) => {
-      if (settings) {
-        setGymName(settings.gym_name || 'Gym Management');
-        if (settings.logo) {
-          setGymLogo(`http://localhost:8000/storage/${settings.logo}`);
-        }
-      }
-    });
-  }, []);
+  const [gymLogo] = useState<string | null>(null);
+  const [gymName] = useState('Gym Management');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

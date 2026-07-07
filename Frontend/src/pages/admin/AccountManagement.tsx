@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
-import { userApi } from '../../services/userApi';
+import { userApi } from '../../services/admin/userApi';
 import type { User, UserFilters } from '../../types/User';
 import { CreateUserModal } from '../../components/User/CreateUserModal';
 import { UpdateUserModal } from '../../components/User/UpdateUserModal';

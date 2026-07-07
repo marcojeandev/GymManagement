@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { saleApi } from '../../services/saleApi';
+import { saleApi } from '../../services/admin/saleApi';
 import type { Sale } from '../../types/Sale';
 import { X, AlertTriangle } from 'lucide-react';
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
-import { reportsApi } from '../../services/reportsApi';
+import { reportsApi } from '../../services/admin/reportsApi';
 import toast from 'react-hot-toast';
 import {
   BarChart,

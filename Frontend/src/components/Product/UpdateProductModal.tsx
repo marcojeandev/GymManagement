@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { productApi } from '../../services/productApi';
+import { productApi } from '../../services/admin/productApi';
 import type { Product } from '../../types/Product';
 import { X, Upload } from 'lucide-react';
 

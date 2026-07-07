@@ -1,5 +1,5 @@
-import api from './api';
-import type { Member, MemberFilters } from '../types/Members';
+import api from '.././api';
+import type { Member, MemberFilters } from '../../types/Members';
 
 export const memberApi = {
   async getMembers(filters: MemberFilters = {}) {
@@ -18,31 +18,31 @@ export const memberApi = {
     if (filters.per_page) params.append('per_page', String(filters.per_page));
     if (filters.page) params.append('page', String(filters.page));
     
-    const response = await api.get(`/admin/members?${params.toString()}`);
+    const response = await api.get(`/cashier/members?${params.toString()}`);
     return response.data.data; // returns { data: [...], current_page, last_page, ... }
   },
 
   async getMember(id: number) {
-    const response = await api.get(`/admin/members/${id}`);
+    const response = await api.get(`/cashier/members/${id}`);
     return response.data.data;
   },
 
   async createMember(data: FormData) {
-    const response = await api.post('/admin/members', data, {
+    const response = await api.post('/cashier/members', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data.data;
   },
 
   async updateMember(id: number, data: FormData) {
-    const response = await api.post(`/admin/members/${id}?_method=PUT`, data, {
+    const response = await api.post(`/cashier/members/${id}?_method=PUT`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data.data;
   },
 
   async deleteMember(id: number) {
-    await api.delete(`/admin/members/${id}`);
+    await api.delete(`/cashier/members/${id}`);
   },
 
   // For MemberSearchSelect (used in contracts)
@@ -50,12 +50,12 @@ export const memberApi = {
     const params = new URLSearchParams();
     if (filters.search) params.append('search', filters.search);
     params.append('per_page', '20');
-    const response = await api.get(`/admin/members?${params.toString()}`);
+    const response = await api.get(`/cashier/members?${params.toString()}`);
     return response.data.data;
   },
 
   async getMemberByQR(qrCode: string) {
-    const response = await api.get(`/admin/members/by-qr/${qrCode}`);
+    const response = await api.get(`/cashier/members/by-qr/${qrCode}`);
     return response.data;
   }
 };

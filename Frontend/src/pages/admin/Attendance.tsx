@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
-import { attendanceApi } from '../../services/attendanceApi';
-import { memberApi } from '../../services/memberApi';
+import { attendanceApi } from '../../services/admin/attendanceApi';
+import { memberApi } from '../../services/admin/memberApi';
 import type { Attendance, AttendanceFilters } from '../../types/Attendance';
 import type { Member } from '../../types/Members';
 import { CreateAttendanceModal } from '../../components/Attendance/CreateAttendanceModal';

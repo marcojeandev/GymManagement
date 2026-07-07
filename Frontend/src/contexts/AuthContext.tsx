@@ -23,14 +23,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+useEffect(() => {
+  const handleForceLogout = () => {
+    setToken(null);
+    setUser(null);
+  };
+  window.addEventListener('auth:logout', handleForceLogout);
+  return () => window.removeEventListener('auth:logout', handleForceLogout);
+}, []);
 
   const login = async (email: string, password: string) => {
     const response = await api.post('/login', { email, password });

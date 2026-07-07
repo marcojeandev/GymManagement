@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { systemSettingsApi } from '../services/systemSettingsApi';
+import { systemSettingsApi } from '../services/admin/systemSettingsApi';
 import toast from 'react-hot-toast';
 import { Menu, X } from 'lucide-react';
 

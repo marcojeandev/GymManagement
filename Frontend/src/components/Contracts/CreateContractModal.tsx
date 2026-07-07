@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { contractApi } from '../../services/contractApi';
+import { contractApi } from '../../services/admin/contractApi';
 import type { ContractPricing } from '../../types/Contract';
 import type { Member } from '../../types/Members';
 import { MemberSearchSelect } from './MemberSearchSelect';

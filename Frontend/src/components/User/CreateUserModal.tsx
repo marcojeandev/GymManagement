@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { userApi } from '../../services/userApi';
+import { userApi } from '../../services/admin/userApi';
 import { X } from 'lucide-react';
 
 interface CreateUserModalProps {
