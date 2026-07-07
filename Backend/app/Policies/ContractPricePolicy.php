@@ -13,7 +13,7 @@ class ContractPricePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role === 'admin';
+        return $user->role === 'admin' || $user->role === 'cashier';
     }
 
     /**
@@ -21,7 +21,7 @@ class ContractPricePolicy
      */
     public function view(User $user, ContractPrice $contractPrice): bool
     {
-        return $user->role === 'admin';
+        return $user->role === 'admin' || $user->role === 'cashier';
     }
 
     /**

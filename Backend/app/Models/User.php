@@ -31,10 +31,27 @@ class User extends Authenticatable
         ];
     }
 
-    public function isAdmin(){
+    /**
+     * Check if user is a cashier
+     */
+    public function isCashier(): bool
+    {
+        return $this->role === 'cashier';
+    }
+
+    /**
+     * Check if user is an admin
+     */
+    public function isAdmin(): bool
+    {
         return $this->role === 'admin';
     }
-    public function isCashier(){
-        return $this->role === 'cashier';
+
+    /**
+     * Check if user has cashier or admin access
+     */
+    public function hasCashierAccess(): bool
+    {
+        return in_array($this->role, ['cashier', 'admin']);
     }
 }

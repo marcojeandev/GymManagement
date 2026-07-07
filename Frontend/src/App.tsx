@@ -1,4 +1,6 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+﻿// App.tsx
+
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Setup } from './pages/Setup';
@@ -8,7 +10,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { useEffect, useState } from 'react';
 import { checkSystemStatus } from './services/api';
 
-// Admin ======================================================================
+// Admin imports
 import { MembersPage as AdminMembersPage } from './pages/admin/Members';
 import { SystemSettingsPage } from './pages/admin/SystemSettings';
 import { ContractsPage as AdminContractsPage } from './pages/admin/Contracts';
@@ -20,7 +22,7 @@ import { AttendancePage as AdminAttendancePage } from './pages/admin/Attendance'
 import { AccountManagementPage } from './pages/admin/AccountManagement';
 import { ReportsPage } from './pages/admin/Reports';
 
-// Cashier ======================================================================
+// Cashier imports
 import { MembersPage as CashierMembersPage } from './pages/cashier/Members';
 import { ContractsPage as CashierContractsPage } from './pages/cashier/Contracts';
 import { ProductsPage as CashierProductsPage } from './pages/cashier/Products';
@@ -28,10 +30,10 @@ import { SalesPage as CashierSalesPage } from './pages/cashier/Sales';
 import { WalkinsPage as CashierWalkinsPage } from './pages/cashier/Walkins';
 import { WalkinAttendancePage as CashierWalkinAttendancePage } from './pages/cashier/WalkinAttendance';
 import { AttendancePage as CashierAttendancePage } from './pages/cashier/Attendance';
+import { CashierDashboard } from './pages/cashier/CashierDashboard';
 
 function SystemGuard({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'configured' | 'unconfigured'>('loading');
-  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     checkSystemStatus()
@@ -51,7 +53,6 @@ function SystemGuard({ children }: { children: React.ReactNode }) {
     return <Navigate to="/setup" replace />;
   }
 
-  // If configured, allow access
   return <>{children}</>;
 }
 
@@ -68,7 +69,6 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Setup and Login are ALWAYS accessible (no guard) */}
           <Route path="/setup" element={<Setup />} />
           <Route path="/login" element={<Login />} />
 
@@ -86,6 +86,7 @@ function App() {
           <Route path="/dashboard/reports" element={<ProtectedSystemRoute element={<ReportsPage />} />} />
 
           {/* Cashier Routes */}
+          <Route path="/cashier/dashboard" element={<ProtectedSystemRoute element={<CashierDashboard />} />} />
           <Route path="/cashier/members" element={<ProtectedSystemRoute element={<CashierMembersPage />} />} />
           <Route path="/cashier/contracts" element={<ProtectedSystemRoute element={<CashierContractsPage />} />} />
           <Route path="/cashier/products" element={<ProtectedSystemRoute element={<CashierProductsPage />} />} />
@@ -94,7 +95,6 @@ function App() {
           <Route path="/cashier/walk-in-attendance" element={<ProtectedSystemRoute element={<CashierWalkinAttendancePage />} />} />
           <Route path="/cashier/attendance" element={<ProtectedSystemRoute element={<CashierAttendancePage />} />} />
 
-          {/* Redirect any unknown routes to dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
         <Toaster

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Middleware;
 
 use Closure;
@@ -8,16 +7,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        if(!auth('sanctum')->check() && !auth('sanctum')->user()->isAdmin()){
+        // Check if user is authenticated
+        if (!auth('sanctum')->check()) {
+            abort(403, 'Unauthenticated. Please login first.');
+        }
+
+        // Check if user has admin role
+        $user = auth('sanctum')->user();
+        if (!$user->isAdmin()) {
             abort(403, 'Admin access only');
         }
+
         return $next($request);
     }
 }

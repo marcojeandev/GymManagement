@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\DashboardCacheService;
 
-class DashboardController extends Controller
+class CashierDashboardController extends Controller
 {
     protected $cacheService;
 
@@ -17,14 +17,34 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $data = $this->cacheService->getOverview();
-        return response()->json(['status' => 1, 'data' => $data]);
+        try {
+            $data = $this->cacheService->getOverview();
+            return response()->json([
+                'status' => 1, 
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Failed to fetch dashboard data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function salesTrend(Request $request)
     {
-        $days = $request->input('days', 7);
-        $data = $this->cacheService->getSalesTrend($days);
-        return response()->json(['status' => 1, 'data' => $data]);
+        try {
+            $days = $request->input('days', 7);
+            $data = $this->cacheService->getSalesTrend($days);
+            return response()->json([
+                'status' => 1, 
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 0,
+                'message' => 'Failed to fetch sales trend: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

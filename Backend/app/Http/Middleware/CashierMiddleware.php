@@ -15,8 +15,17 @@ class CashierMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if(!auth('sanctum')->check() && !auth('sanctum')->user()->isCashier()){
+        // Check if user is authenticated
+        if (!auth('sanctum')->check()) {
+            abort(403, 'Unauthenticated. Please login first.');
+        }
+
+        // Check if user has cashier role
+        $user = auth('sanctum')->user();
+        if (!$user->isCashier() && !$user->isAdmin()) {
             abort(403, 'Cashier access only');
         }
+
+        return $next($request);
     }
 }

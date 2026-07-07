@@ -21,6 +21,7 @@ use App\Http\Controllers\Cashier\WalkinAttendanceController as CashierWalkinAtte
 use App\Http\Controllers\Cashier\SalesController as CashierSalesController;
 use App\Http\Controllers\Cashier\AttendanceController as CashierAttendanceController;
 use App\Http\Controllers\Cashier\WalkinInfoController as CashierWalkinInfoController;
+use App\Http\Controllers\cashier\SettingsController as CashierSettingsController;
 
 
 use App\Http\Controllers\SettingsController as PublicSettingsController;
@@ -137,4 +138,10 @@ Route::middleware(['auth:sanctum', 'cashier', 'throttle:60,1'])
         Route::apiResource('attendance', CashierAttendanceController::class);
         Route::post('attendance/scan', [CashierAttendanceController::class, 'scan'])->name('attendance.scan');
 
+        // Settings Management 
+        Route::get('/membership-price', [CashierSettingsController::class, 'getMembershipPrice']);
+        Route::get('/gym-settings', [CashierSettingsController::class, 'getGymSettings']);
+        Route::prefix('contract-prices')->group(function () {
+            Route::get('/', [CashierSettingsController::class, 'getContractPrices']);
+        });
     });

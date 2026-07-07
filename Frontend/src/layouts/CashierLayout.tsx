@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { systemSettingsApi } from '../services/cashier/systemSettingsApi'; // ✅ re‑enabled
+import { systemSettingsApi } from '../services/cashier/systemSettingsApi';
 import toast from 'react-hot-toast';
 import { Menu, X } from 'lucide-react';
 
@@ -10,28 +10,28 @@ interface NavGroup {
   items: { label: string; path: string }[];
 }
 
-// ✅ Only three groups – Reports & Administration removed
+// ✅ Updated to use cashier routes
 const navGroups: NavGroup[] = [
   {
     title: 'Management',
     items: [
-      { label: 'Members', path: '/dashboard/members' },
-      { label: 'Contracts', path: '/dashboard/contracts' },
+      { label: 'Members', path: '/cashier/members' },
+      { label: 'Contracts', path: '/cashier/contracts' },
     ],
   },
   {
     title: 'Sales',
     items: [
-      { label: 'Products', path: '/dashboard/products' },
-      { label: 'Sales', path: '/dashboard/sales' },
+      { label: 'Products', path: '/cashier/products' },
+      { label: 'Sales', path: '/cashier/sales' },
     ],
   },
   {
     title: 'Attendance',
     items: [
-      { label: 'Attendance', path: '/dashboard/attendance' },
-      { label: 'Walk-in', path: '/dashboard/walk-in' },
-      { label: 'Walk-in Attendance', path: '/dashboard/walk-in-attendance' },
+      { label: 'Attendance', path: '/cashier/attendance' },
+      { label: 'Walk-in', path: '/cashier/walk-in' },
+      { label: 'Walk-in Attendance', path: '/cashier/walk-in-attendance' },
     ],
   },
 ];

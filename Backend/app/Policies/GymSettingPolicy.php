@@ -13,7 +13,7 @@ class GymSettingPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role === 'admin';
+        return $user->role === 'admin' || $user->role === 'cashier';
     }
 
     /**
@@ -21,7 +21,7 @@ class GymSettingPolicy
      */
     public function view(User $user, GymSetting $gymSetting): bool
     {
-        return $user->role === 'admin';
+        return $user->role === 'admin' || $user->role === 'cashier';
     }
 
     /**
