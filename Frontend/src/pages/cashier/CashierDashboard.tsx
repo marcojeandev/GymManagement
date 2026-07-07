@@ -1,123 +1,243 @@
-// pages/cashier/Dashboard.tsx or wherever this component is
-
 import { useState, useEffect } from 'react';
 import { CashierLayout } from '../../layouts/CashierLayout';
-import api from '../../services/api';
+import { dashboardApi } from '../../services/cashier/dashboardApi';
 import toast from 'react-hot-toast';
-
-interface DashboardData {
-  total_sales?: number;
-  pending_orders?: number;
-  total_members?: number;
-  today_attendance?: number;
-  // Add other fields based on your API response
-}
+import {
+  Users,
+  UserCheck,
+  FileText,
+  DollarSign,
+  Calendar,
+  Clock,
+  TrendingUp,
+  Activity,
+} from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import type { DashboardData, DashboardTrend } from '../../types/Dashboard';
 
 export const CashierDashboard = () => {
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<DashboardData>({
-    total_sales: 0,
-    pending_orders: 0,
-    total_members: 0,
-    today_attendance: 0,
-  });
+  // ✅ Explicitly type trendData as an array of objects with day and sales
+  const [trendData, setTrendData] = useState<{ day: string; sales: number }[]>([]);
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchDashboard();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboard = async () => {
     try {
-      setLoading(true);
-      const response = await api.get('/cashier/dashboard');
-      if (response.data.status === 1) {
-        setData(response.data.data);
-      } else {
-        toast.error(response.data.message || 'Failed to fetch dashboard data');
-      }
-    } catch (error: any) {
-      console.error('Dashboard fetch error:', error);
-      toast.error(error.response?.data?.message || 'Error loading dashboard');
+      // ✅ Type the resolved values using 'as' to tell TypeScript what we expect
+      const [dashboardData, trend] = await Promise.all([
+        dashboardApi.getDashboard(),
+        dashboardApi.getSalesTrend(7),
+      ]) as [DashboardData, DashboardTrend];
+
+      // ✅ Ensure recent_sales is always an array
+      const safeData: DashboardData = {
+        ...dashboardData,
+        recent_sales: Array.isArray(dashboardData.recent_sales)
+          ? dashboardData.recent_sales
+          : [],
+      };
+
+      setData(safeData);
+
+      // ✅ Build chart data with explicit types for map parameters
+      const chartData = trend.labels.map((label: string, i: number) => ({
+        day: label,
+        sales: trend.values[i] ?? 0, // use nullish coalescing for safety
+      }));
+      setTrendData(chartData);
+    } catch (error) {
+      toast.error('Failed to load dashboard');
     } finally {
       setLoading(false);
     }
   };
 
+  // Safe currency formatter
+  const formatCurrency = (value: number | string | null | undefined): string => {
+    const num = Number(value);
+    if (isNaN(num)) return '₱0.00';
+    return `₱${num.toFixed(2)}`;
+  };
+
   if (loading) {
     return (
       <CashierLayout>
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-white mb-6">Cashier Dashboard</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-[#14181f] rounded-xl p-5 border border-gray-700/30 animate-pulse">
-                <div className="h-4 bg-gray-700 rounded w-1/2 mb-2"></div>
-                <div className="h-8 bg-gray-700 rounded w-3/4"></div>
-              </div>
-            ))}
-          </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-white text-xl animate-pulse">Loading dashboard...</div>
         </div>
       </CashierLayout>
     );
   }
 
+  if (!data) return null;
+
   return (
     <CashierLayout>
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold text-white mb-6">Cashier Dashboard</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Today's Sales */}
-          <div className="bg-[#14181f] rounded-xl p-5 border border-gray-700/30">
-            <h3 className="text-gray-400 text-sm">Today's Sales</h3>
-            <p className="text-3xl font-bold text-white mt-1">
-              ₱{data.total_sales?.toLocaleString() || '0'}
-            </p>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
+            Dashboard
+          </h2>
+          <span className="text-gray-400 text-sm">
+            Last updated: {new Date().toLocaleString()}
+          </span>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm">Total Members</p>
+                <p className="text-2xl font-bold text-white">{data.members.total}</p>
+                <div className="flex gap-2 mt-1 text-xs">
+                  <span className="text-green-400">Active: {data.members.active}</span>
+                  <span className="text-blue-400">New: {data.members.new_this_month}</span>
+                </div>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-red-600/20 flex items-center justify-center">
+                <Users className="text-red-400" size={24} />
+              </div>
+            </div>
           </div>
 
-          {/* Pending Orders */}
-          <div className="bg-[#14181f] rounded-xl p-5 border border-gray-700/30">
-            <h3 className="text-gray-400 text-sm">Pending Orders</h3>
-            <p className="text-3xl font-bold text-white mt-1">
-              {data.pending_orders || 0}
-            </p>
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm">Active Contracts</p>
+                <p className="text-2xl font-bold text-white">{data.contracts.active}</p>
+                <p className="text-xs text-yellow-400 mt-1">
+                  Expiring soon: {data.contracts.expiring_soon}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-green-600/20 flex items-center justify-center">
+                <FileText className="text-green-400" size={24} />
+              </div>
+            </div>
           </div>
 
-          {/* Total Members */}
-          <div className="bg-[#14181f] rounded-xl p-5 border border-gray-700/30">
-            <h3 className="text-gray-400 text-sm">Total Members</h3>
-            <p className="text-3xl font-bold text-white mt-1">
-              {data.total_members || 0}
-            </p>
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm">Revenue (Month)</p>
+                <p className="text-2xl font-bold text-white">{formatCurrency(data.sales.this_month)}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Today: {formatCurrency(data.sales.today)}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-yellow-600/20 flex items-center justify-center">
+                <DollarSign className="text-yellow-400" size={24} />
+              </div>
+            </div>
           </div>
 
-          {/* Today's Attendance */}
-          <div className="bg-[#14181f] rounded-xl p-5 border border-gray-700/30">
-            <h3 className="text-gray-400 text-sm">Today's Attendance</h3>
-            <p className="text-3xl font-bold text-white mt-1">
-              {data.today_attendance || 0}
-            </p>
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm">Attendance (Month)</p>
+                <p className="text-2xl font-bold text-white">{data.attendance.this_month}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Today: {data.attendance.today} • Walk-ins: {data.walkins.today}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-blue-600/20 flex items-center justify-center">
+                <Calendar className="text-blue-400" size={24} />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Optional: Add more sections like recent activity, sales chart, etc. */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-[#14181f] rounded-xl p-5 border border-gray-700/30">
-            <h3 className="text-white font-semibold mb-4">Recent Sales</h3>
-            <p className="text-gray-400 text-sm">No recent sales to display</p>
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Sales Trend */}
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                <TrendingUp size={20} className="text-yellow-400" />
+                Sales Trend (Last 7 Days)
+              </h3>
+              <span className="text-xs text-gray-400">
+                {formatCurrency(trendData.reduce((sum, d) => sum + d.sales, 0))}
+              </span>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="day" stroke="#9ca3af" fontSize={10} />
+                <YAxis stroke="#9ca3af" fontSize={10} />
+                <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                <Bar dataKey="sales" fill="#ef4444" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          <div className="bg-[#14181f] rounded-xl p-5 border border-gray-700/30">
-            <h3 className="text-white font-semibold mb-4">Quick Actions</h3>
-            <div className="flex flex-wrap gap-3">
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
-                New Member
-              </button>
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
-                New Sale
-              </button>
-              <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm">
-                Check In
-              </button>
+
+          {/* Recent Activity */}
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5">
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Activity size={20} className="text-blue-400" />
+              Recent Sales
+            </h3>
+            <div className="space-y-3 max-h-[200px] overflow-y-auto">
+              {data.recent_sales.length === 0 ? (
+                <p className="text-gray-400 text-sm">No recent sales</p>
+              ) : (
+                data.recent_sales.map((sale) => (
+                  <div key={sale.id} className="flex items-center justify-between bg-[#1e242c] p-3 rounded-lg border border-gray-700/30">
+                    <div>
+                      <p className="text-white font-medium">{sale.paid_by}</p>
+                      <p className="text-gray-400 text-xs">OR #{sale.or_number}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-yellow-400 font-semibold">{formatCurrency(sale.amount)}</p>
+                      <p className="text-gray-500 text-xs">{sale.created_at}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-4 shadow-xl shadow-red-500/5 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-purple-600/20 flex items-center justify-center">
+              <UserCheck className="text-purple-400" size={24} />
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm">Walk-ins (Month)</p>
+              <p className="text-xl font-bold text-white">{data.walkins.this_month}</p>
+            </div>
+          </div>
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-4 shadow-xl shadow-red-500/5 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-indigo-600/20 flex items-center justify-center">
+              <Clock className="text-indigo-400" size={24} />
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm">Attendance Today</p>
+              <p className="text-xl font-bold text-white">{data.attendance.today}</p>
+            </div>
+          </div>
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-4 shadow-xl shadow-red-500/5 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-pink-600/20 flex items-center justify-center">
+              <DollarSign className="text-pink-400" size={24} />
+            </div>
+            <div>
+              <p className="text-gray-400 text-sm">Revenue Today</p>
+              <p className="text-xl font-bold text-white">{formatCurrency(data.sales.today)}</p>
             </div>
           </div>
         </div>

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Cashier;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\DashboardCacheService;
 
-class CashierDashboardController extends Controller
+class DashboardController extends Controller
 {
     protected $cacheService;
 
@@ -17,34 +17,14 @@ class CashierDashboardController extends Controller
 
     public function index()
     {
-        try {
-            $data = $this->cacheService->getOverview();
-            return response()->json([
-                'status' => 1, 
-                'data' => $data
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Failed to fetch dashboard data: ' . $e->getMessage()
-            ], 500);
-        }
+        $data = $this->cacheService->getOverview();
+        return response()->json(['status' => 1, 'data' => $data]);
     }
 
     public function salesTrend(Request $request)
     {
-        try {
-            $days = $request->input('days', 7);
-            $data = $this->cacheService->getSalesTrend($days);
-            return response()->json([
-                'status' => 1, 
-                'data' => $data
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 0,
-                'message' => 'Failed to fetch sales trend: ' . $e->getMessage()
-            ], 500);
-        }
+        $days = $request->input('days', 7);
+        $data = $this->cacheService->getSalesTrend($days);
+        return response()->json(['status' => 1, 'data' => $data]);
     }
 }

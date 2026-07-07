@@ -112,7 +112,7 @@ Route::middleware(['auth:sanctum', 'cashier', 'throttle:60,1'])
     ->name('cashier.')
     ->group(function (){
         // Dashboard Management
-        Route::get('dashboard', [CashierDashboardController::class, 'index']);
+        Route::get('dashboard', [DashboardController::class, 'index']);
 
 
         // Members Management
@@ -143,5 +143,12 @@ Route::middleware(['auth:sanctum', 'cashier', 'throttle:60,1'])
         Route::get('/gym-settings', [CashierSettingsController::class, 'getGymSettings']);
         Route::prefix('contract-prices')->group(function () {
             Route::get('/', [CashierSettingsController::class, 'getContractPrices']);
+        });
+
+        // Reports Management
+        Route::prefix('reports')->group(function () {
+            Route::get('sales-trend', [ReportsController::class, 'salesTrend']);
+            Route::get('attendance-trend', [ReportsController::class, 'attendanceTrend']);
+            Route::get('revenue', [ReportsController::class, 'revenueBreakdown']);
         });
     });
