@@ -13,7 +13,7 @@ class MembershipFeePolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->role === 'admin';
     }
 
     /**
@@ -21,7 +21,7 @@ class MembershipFeePolicy
      */
     public function view(User $user, MembershipFee $membershipFee): bool
     {
-        return false;
+        return $user->role === 'admin';
     }
 
     /**
@@ -29,7 +29,7 @@ class MembershipFeePolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->role === 'admin';
     }
 
     /**
@@ -37,7 +37,7 @@ class MembershipFeePolicy
      */
     public function update(User $user, MembershipFee $membershipFee): bool
     {
-        return false;
+        return $user->role === 'admin';
     }
 
     /**
@@ -45,7 +45,7 @@ class MembershipFeePolicy
      */
     public function delete(User $user, MembershipFee $membershipFee): bool
     {
-        return false;
+        return $user->role === 'admin';
     }
 
     /**
@@ -53,7 +53,7 @@ class MembershipFeePolicy
      */
     public function restore(User $user, MembershipFee $membershipFee): bool
     {
-        return false;
+        return $user->role === 'admin';
     }
 
     /**
@@ -61,6 +61,6 @@ class MembershipFeePolicy
      */
     public function forceDelete(User $user, MembershipFee $membershipFee): bool
     {
-        return false;
+        return $user->role === 'admin';
     }
 }

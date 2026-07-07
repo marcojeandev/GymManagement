@@ -9,7 +9,7 @@ class AttendanceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->isAdmin();
+        return auth()->check() && auth()->user()->isCashier();
     }
 
     public function rules(): array

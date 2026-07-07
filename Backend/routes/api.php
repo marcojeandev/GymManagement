@@ -1,4 +1,5 @@
 <?php
+// Admin
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MembersController;
 use App\Http\Controllers\Admin\UserController;
@@ -10,6 +11,18 @@ use App\Http\Controllers\Admin\SalesController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\WalkinInfoController;
 use App\Http\Controllers\Admin\ReportsController;
+
+// Cashier
+use App\Http\Controllers\Cashier\DashboardController as CashierDashboardController;
+use App\Http\Controllers\Cashier\MembersController as CashierMembersController;
+use App\Http\Controllers\Cashier\ProductController as CashierProductController;
+use App\Http\Controllers\Cashier\ContractController as CashierContractController;
+use App\Http\Controllers\Cashier\WalkinAttendanceController as CashierWalkinAttendanceController;
+use App\Http\Controllers\Cashier\SalesController as CashierSalesController;
+use App\Http\Controllers\Cashier\AttendanceController as CashierAttendanceController;
+use App\Http\Controllers\Cashier\WalkinInfoController as CashierWalkinInfoController;
+
+
 use App\Http\Controllers\SettingsController as PublicSettingsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GymSettingController;
@@ -43,10 +56,8 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])
 
         // Settings Management 
         Route::get('/membership-price', [SettingsController::class, 'getMembershipPrice']);
-        // Route::get('/contract-price', [SettingsController::class, 'getContractPrice']);
         Route::get('/gym-settings', [SettingsController::class, 'getGymSettings']);
         Route::post('/membership-fee', [SettingsController::class, 'MembershipFeePrice']);
-        // Route::post('/contract-price', [SettingsController::class, 'ContractPrice']);
         Route::post('/system-settings', [SettingsController::class, 'SystemSettings']);
         Route::prefix('contract-prices')->group(function () {
             Route::get('/', [SettingsController::class, 'getContractPrices']);
@@ -93,4 +104,37 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])
         });
 
         Route::get('/gym-icon', [PublicSettingsController::class, 'getGymIcon']);
+    });
+
+Route::middleware(['auth:sanctum', 'cashier', 'throttle:60,1'])
+    ->prefix('cashier')
+    ->name('cashier.')
+    ->group(function (){
+        // Dashboard Management
+        Route::get('dashboard', [CashierDashboardController::class, 'index']);
+
+
+        // Members Management
+        Route::apiResource('members', CashierMembersController::class);
+        Route::get('members/by-qr/{qrCode}', [CashierMembersController::class, 'getByQR']);
+
+        // Contract Management
+        Route::apiResource('contracts', CashierContractController::class);
+
+        // Product Management
+        Route::apiResource('products', CashierProductController::class);
+
+        // Sales Management
+        Route::apiResource('sales', CashierSalesController::class);
+
+        // Walk-in Info Management
+        Route::apiResource('walkin-info', CashierWalkinInfoController::class);
+
+        // Walk-in Attendance Management
+        Route::apiResource('walkin-attendance', CashierWalkinAttendanceController::class);
+
+        // Attendance Management
+        Route::apiResource('attendance', CashierAttendanceController::class);
+        Route::post('attendance/scan', [CashierAttendanceController::class, 'scan'])->name('attendance.scan');
+
     });
