@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { memberApi } from '../../services/admin/memberApi';
-import type { Member } from '../../types/Members';
+import { memberApi } from '../../../services/cashier/memberApi';
+import type { Member } from '../../../types/Members';
 import { X, AlertTriangle } from 'lucide-react';
 
 interface DeleteMemberModalProps {

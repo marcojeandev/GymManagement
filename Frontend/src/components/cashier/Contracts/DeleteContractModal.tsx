@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { contractApi } from '../../services/admin/contractApi';
-import type { Contract } from '../../types/Contract';
+import { contractApi } from '../../../services/cashier/contractApi';
+import type { Contract } from '../../../types/Contract';
 
 interface DeleteContractModalProps {
   isOpen: boolean;

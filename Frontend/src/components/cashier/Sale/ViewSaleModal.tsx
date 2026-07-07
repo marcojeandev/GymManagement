@@ -1,4 +1,4 @@
-import type { Sale } from '../../types/Sale';
+import type { Sale } from '../../../types/Sale';
 import { X, Receipt, User, CreditCard, Calendar } from 'lucide-react';
 
 const formatCurrency = (value: number | null | undefined): string => {

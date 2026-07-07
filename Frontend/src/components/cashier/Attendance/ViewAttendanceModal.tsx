@@ -1,4 +1,4 @@
-import type { Attendance } from '../../types/Attendance';
+import type { Attendance } from '../../../types/Attendance';
 import { X, User, Calendar, Clock } from 'lucide-react';
 
 interface ViewAttendanceModalProps {

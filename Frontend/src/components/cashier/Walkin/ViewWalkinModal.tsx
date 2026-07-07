@@ -1,4 +1,4 @@
-import type { WalkinInfo } from '../../types/WalkinInfo';
+import type { WalkinInfo } from '../../../types/WalkinInfo';
 import { X, User, Mail, Phone, Calendar, BarChart } from 'lucide-react';
 
 interface ViewWalkinModalProps {

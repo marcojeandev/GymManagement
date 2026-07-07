@@ -1,4 +1,4 @@
-import type { WalkinAttendance } from '../../types/WalkinAttendance';
+import type { WalkinAttendance } from '../../../types/WalkinAttendance';
 import { X, User, Phone, Calendar, DollarSign } from 'lucide-react';
 
 interface ViewWalkinAttendanceModalProps {

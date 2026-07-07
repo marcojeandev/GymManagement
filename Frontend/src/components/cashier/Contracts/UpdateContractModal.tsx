@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { contractApi } from '../../services/admin/contractApi';
-import type { Contract, ContractPricing } from '../../types/Contract';
+import { contractApi } from '../../../services/cashier/contractApi';
+import type { Contract, ContractPricing } from '../../../types/Contract';
 
 interface UpdateContractModalProps {
   isOpen: boolean;

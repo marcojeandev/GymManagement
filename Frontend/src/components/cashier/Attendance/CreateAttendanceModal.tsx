@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { attendanceApi } from '../../services/admin/attendanceApi';
-import { memberApi } from '../../services/admin/memberApi';
-import type { Member } from '../../types/Members';
+import { attendanceApi } from '../../../services/cashier/attendanceApi';
+import { memberApi } from '../../../services/cashier/memberApi';
+import type { Member } from '../../../types/Members';
 import { X } from 'lucide-react';
 
 interface CreateAttendanceModalProps {

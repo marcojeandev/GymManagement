@@ -6,7 +6,7 @@ export const dashboardApi = {
    * Get main dashboard statistics (overview, members, sales, attendance, etc.)
    */
   async getDashboard(): Promise<DashboardData> {
-    const response = await api.get('/cashier/dashboard');
+    const response = await api.get('/admin/dashboard');
     return response.data.data;
   },
 
@@ -14,7 +14,7 @@ export const dashboardApi = {
    * Get sales trend data for the last N days (default 7)
    */
   async getSalesTrend(days: number = 7): Promise<DashboardTrend> {
-    const response = await api.get(`/cashier/reports/sales-trend?days=${days}`);
+    const response = await api.get(`/admin/reports/sales-trend?days=${days}`);
     return response.data.data;
   },
 
@@ -22,7 +22,7 @@ export const dashboardApi = {
    * Get attendance trend for the last N days (default 7)
    */
   async getAttendanceTrend(days: number = 7): Promise<DashboardTrend> {
-    const response = await api.get(`/cashier/reports/attendance-trend?days=${days}`);
+    const response = await api.get(`/admin/reports/attendance-trend?days=${days}`);
     return response.data.data;
   },
 };

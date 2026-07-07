@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { saleApi } from '../../services/admin/saleApi';
-import { productApi } from '../../services/admin/productApi';
-import type { Product } from '../../types/Product';
+import { saleApi } from '../../../services/cashier/saleApi';
+import { productApi } from '../../../services/cashier/productApi';
+import type { Product } from '../../../types/Product';
 import { X, Plus, Trash2 } from 'lucide-react';
 
 interface CreateSaleModalProps {

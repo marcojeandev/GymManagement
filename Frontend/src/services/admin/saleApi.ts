@@ -7,30 +7,30 @@ export const saleApi = {
     if (filters.search) params.append('search', filters.search);
     if (filters.per_page) params.append('per_page', String(filters.per_page));
     if (filters.page) params.append('page', String(filters.page));
-    const response = await api.get(`/cashier/sales?${params.toString()}`);
+    const response = await api.get(`/admin/sales?${params.toString()}`);
     return response.data.data;
   },
 
   async getSale(id: number) {
-    const response = await api.get(`/cashier/sales/${id}`);
+    const response = await api.get(`/admin/sales/${id}`);
     return response.data.data;
   },
 
   async createSale(data: FormData) {
-    const response = await api.post('/cashier/sales', data, {
+    const response = await api.post('/admin/sales', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data.data;
   },
 
   async updateSale(id: number, data: FormData) {
-    const response = await api.post(`/cashier/sales/${id}?_method=PUT`, data, {
+    const response = await api.post(`/admin/sales/${id}?_method=PUT`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data.data;
   },
 
   async deleteSale(id: number) {
-    await api.delete(`/cashier/sales/${id}`);
+    await api.delete(`/admin/sales/${id}`);
   },
 };

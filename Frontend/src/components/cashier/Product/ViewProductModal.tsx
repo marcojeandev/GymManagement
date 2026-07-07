@@ -1,4 +1,4 @@
-import type { Product } from '../../types/Product';
+import type { Product } from '../../../types/Product';
 import { X, Package, DollarSign, Tag, ShoppingCart, Archive } from 'lucide-react';
 
 interface ViewProductModalProps {

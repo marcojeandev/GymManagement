@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { memberApi } from '../../services/admin/memberApi';
-import api from '../../services/api';
+import { memberApi } from '../../../services/cashier/memberApi';
+import api from '../../../services/api';
 
 interface MemberSearchSelectProps {
   value: number | '';

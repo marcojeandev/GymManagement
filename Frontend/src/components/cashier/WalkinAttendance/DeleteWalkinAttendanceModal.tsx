@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { walkinAttendanceApi } from '../../services/admin/walkinAttendanceApi';
-import type { WalkinAttendance } from '../../types/WalkinAttendance';
+import { walkinAttendanceApi } from '../../../services/cashier/walkinAttendanceApi';
+import type { WalkinAttendance } from '../../../types/WalkinAttendance';
 import { X, AlertTriangle } from 'lucide-react';
 
 interface DeleteWalkinAttendanceModalProps {

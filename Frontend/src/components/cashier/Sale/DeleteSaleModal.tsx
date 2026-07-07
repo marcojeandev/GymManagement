@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { saleApi } from '../../services/admin/saleApi';
-import type { Sale } from '../../types/Sale';
+import { saleApi } from '../../../services/cashier/saleApi';
+import type { Sale } from '../../../types/Sale';
 import { X, AlertTriangle } from 'lucide-react';
 
 interface DeleteSaleModalProps {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { walkinApi } from '../../services/admin/walkinApi';
-import type { WalkinInfo } from '../../types/WalkinInfo';
+import { walkinApi } from '../../../services/cashier/walkinApi';
+import type { WalkinInfo } from '../../../types/WalkinInfo';
 import { X } from 'lucide-react';
 
 interface UpdateWalkinModalProps {

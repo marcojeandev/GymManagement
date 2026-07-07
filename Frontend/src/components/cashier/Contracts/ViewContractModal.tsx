@@ -1,4 +1,4 @@
-import type { Contract } from '../../types/Contract';
+import type { Contract } from '../../../types/Contract';
 
 interface ViewContractModalProps {
   isOpen: boolean;

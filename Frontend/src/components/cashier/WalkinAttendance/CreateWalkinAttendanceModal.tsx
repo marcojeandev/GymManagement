@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { walkinAttendanceApi } from '../../services/admin/walkinAttendanceApi';
-import { walkinApi } from '../../services/admin/walkinApi';
-import { memberApi } from '../../services/admin/memberApi';
-import type { WalkinInfo } from '../../types/WalkinInfo';
-import type { Member } from '../../types/Members';
+import { walkinAttendanceApi } from '../../../services/cashier/walkinAttendanceApi';
+import { walkinApi } from '../../../services/cashier/walkinApi';
+import { memberApi } from '../../../services/cashier/memberApi';
+import type { WalkinInfo } from '../../../types/WalkinInfo';
+import type { Member } from '../../../types/Members';
 import { X } from 'lucide-react';
 
 interface CreateWalkinAttendanceModalProps {

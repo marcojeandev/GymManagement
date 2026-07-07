@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { memberApi } from '../../services/admin/memberApi';
-import { systemSettingsApi } from '../../services/admin/systemSettingsApi';
-import type { MembershipPrice } from '../../services/admin/systemSettingsApi';
-import type { MemberFormData } from '../../types/Members';
+import { memberApi } from '../../../services/cashier/memberApi';
+import { systemSettingsApi } from '../../../services/cashier/systemSettingsApi';
+import type { MembershipPrice } from '../../../services/cashier/systemSettingsApi';
+import type { MemberFormData } from '../../../types/Members';
 import { X, Camera, Upload } from 'lucide-react';
 
 interface CreateMemberModalProps {
