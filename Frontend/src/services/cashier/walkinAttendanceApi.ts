@@ -7,30 +7,30 @@ export const walkinAttendanceApi = {
     if (filters.search) params.append('search', filters.search);
     if (filters.per_page) params.append('per_page', String(filters.per_page));
     if (filters.page) params.append('page', String(filters.page));
-    const response = await api.get(`/admin/walkin-attendance?${params.toString()}`);
+    const response = await api.get(`/cashier/walkin-attendance?${params.toString()}`);
     return response.data.data;
   },
 
   async getAttendance(id: number) {
-    const response = await api.get(`/admin/walkin-attendance/${id}`);
+    const response = await api.get(`/cashier/walkin-attendance/${id}`);
     return response.data.data;
   },
 
   async createAttendance(data: FormData) {
-    const response = await api.post('/admin/walkin-attendance', data, {
+    const response = await api.post('/cashier/walkin-attendance', data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data.data;
   },
 
   async updateAttendance(id: number, data: FormData) {
-    const response = await api.post(`/admin/walkin-attendance/${id}?_method=PUT`, data, {
+    const response = await api.post(`/cashier/walkin-attendance/${id}?_method=PUT`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data.data;
   },
 
   async deleteAttendance(id: number) {
-    await api.delete(`/admin/walkin-attendance/${id}`);
+    await api.delete(`/cashier/walkin-attendance/${id}`);
   },
 };

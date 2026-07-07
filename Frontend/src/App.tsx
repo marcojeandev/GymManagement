@@ -5,18 +5,29 @@ import { Setup } from './pages/Setup';
 import { Login } from './pages/Login';
 import { DashboardRouter } from './pages/DashboardRouter';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { MembersPage } from './pages/admin/Members';
-import { SystemSettingsPage } from './pages/admin/SystemSettings';
 import { useEffect, useState } from 'react';
 import { checkSystemStatus } from './services/api';
-import { ContractsPage } from './pages/admin/Contracts';
-import { ProductsPage } from './pages/admin/Products';
-import { SalesPage } from './pages/admin/Sales';
-import { WalkinsPage } from './pages/admin/Walkins';
-import { WalkinAttendancePage } from './pages/admin/WalkinAttendance';
-import { AttendancePage } from './pages/admin/Attendance';
+
+// Admin ======================================================================
+import { MembersPage as AdminMembersPage } from './pages/admin/Members';
+import { SystemSettingsPage } from './pages/admin/SystemSettings';
+import { ContractsPage as AdminContractsPage } from './pages/admin/Contracts';
+import { ProductsPage as AdminProductsPage } from './pages/admin/Products';
+import { SalesPage as AdminSalesPage } from './pages/admin/Sales';
+import { WalkinsPage as AdminWalkinsPage } from './pages/admin/Walkins';
+import { WalkinAttendancePage as AdminWalkinAttendancePage } from './pages/admin/WalkinAttendance';
+import { AttendancePage as AdminAttendancePage } from './pages/admin/Attendance';
 import { AccountManagementPage } from './pages/admin/AccountManagement';
 import { ReportsPage } from './pages/admin/Reports';
+
+// Cashier ======================================================================
+import { MembersPage as CashierMembersPage } from './pages/cashier/Members';
+import { ContractsPage as CashierContractsPage } from './pages/cashier/Contracts';
+import { ProductsPage as CashierProductsPage } from './pages/cashier/Products';
+import { SalesPage as CashierSalesPage } from './pages/cashier/Sales';
+import { WalkinsPage as CashierWalkinsPage } from './pages/cashier/Walkins';
+import { WalkinAttendancePage as CashierWalkinAttendancePage } from './pages/cashier/WalkinAttendance';
+import { AttendancePage as CashierAttendancePage } from './pages/cashier/Attendance';
 
 function SystemGuard({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'configured' | 'unconfigured'>('loading');
@@ -61,18 +72,27 @@ function App() {
           <Route path="/setup" element={<Setup />} />
           <Route path="/login" element={<Login />} />
 
-          {/* Protected routes – require auth and system configured */}
+          {/* Admin Routes */}
           <Route path="/dashboard" element={<ProtectedSystemRoute element={<DashboardRouter />} />} />
-          <Route path="/dashboard/members" element={<ProtectedSystemRoute element={<MembersPage />} />} />
+          <Route path="/dashboard/members" element={<ProtectedSystemRoute element={<AdminMembersPage />} />} />
           <Route path="/dashboard/system-settings" element={<ProtectedSystemRoute element={<SystemSettingsPage />} />} />
-          <Route path="/dashboard/contracts" element={<ProtectedSystemRoute element={<ContractsPage />} />} />
-          <Route path="/dashboard/products" element={<ProtectedSystemRoute element={<ProductsPage />} />} />
-          <Route path="/dashboard/sales" element={<ProtectedSystemRoute element={<SalesPage />} />} />
-          <Route path="/dashboard/walk-in" element={<ProtectedSystemRoute element={<WalkinsPage />} />} />
-          <Route path="/dashboard/walk-in-attendance" element={<ProtectedSystemRoute element={<WalkinAttendancePage />} />} />
-          <Route path="/dashboard/attendance" element={<ProtectedSystemRoute element={<AttendancePage />} />} />
+          <Route path="/dashboard/contracts" element={<ProtectedSystemRoute element={<AdminContractsPage />} />} />
+          <Route path="/dashboard/products" element={<ProtectedSystemRoute element={<AdminProductsPage />} />} />
+          <Route path="/dashboard/sales" element={<ProtectedSystemRoute element={<AdminSalesPage />} />} />
+          <Route path="/dashboard/walk-in" element={<ProtectedSystemRoute element={<AdminWalkinsPage />} />} />
+          <Route path="/dashboard/walk-in-attendance" element={<ProtectedSystemRoute element={<AdminWalkinAttendancePage />} />} />
+          <Route path="/dashboard/attendance" element={<ProtectedSystemRoute element={<AdminAttendancePage />} />} />
           <Route path="/dashboard/account-management" element={<ProtectedSystemRoute element={<AccountManagementPage />} />} />
           <Route path="/dashboard/reports" element={<ProtectedSystemRoute element={<ReportsPage />} />} />
+
+          {/* Cashier Routes */}
+          <Route path="/cashier/members" element={<ProtectedSystemRoute element={<CashierMembersPage />} />} />
+          <Route path="/cashier/contracts" element={<ProtectedSystemRoute element={<CashierContractsPage />} />} />
+          <Route path="/cashier/products" element={<ProtectedSystemRoute element={<CashierProductsPage />} />} />
+          <Route path="/cashier/sales" element={<ProtectedSystemRoute element={<CashierSalesPage />} />} />
+          <Route path="/cashier/walk-in" element={<ProtectedSystemRoute element={<CashierWalkinsPage />} />} />
+          <Route path="/cashier/walk-in-attendance" element={<ProtectedSystemRoute element={<CashierWalkinAttendancePage />} />} />
+          <Route path="/cashier/attendance" element={<ProtectedSystemRoute element={<CashierAttendancePage />} />} />
 
           {/* Redirect any unknown routes to dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
