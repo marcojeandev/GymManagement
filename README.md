@@ -83,7 +83,7 @@ This system transforms traditional gym management by automating member contracts
 - **Axios** - HTTP client
 
 ### Backend
-- **Laravel 10/11** - PHP framework
+- **Laravel 13** - PHP framework
 - **Laravel Sanctum** - API authentication
 - **MySQL** - Database
 - **REST API** - Architecture
