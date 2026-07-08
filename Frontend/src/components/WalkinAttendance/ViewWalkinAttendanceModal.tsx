@@ -10,7 +10,7 @@ interface ViewWalkinAttendanceModalProps {
 export const ViewWalkinAttendanceModal = ({ isOpen, onClose, attendance }: ViewWalkinAttendanceModalProps) => {
   if (!isOpen || !attendance) return null;
 
-  const person = attendance.walkin_info || attendance.member;
+  // const person = attendance.walkin_info || attendance.member;
   const personName = attendance.walkin_info
     ? `${attendance.walkin_info.firstname} ${attendance.walkin_info.lastname}`
     : attendance.member

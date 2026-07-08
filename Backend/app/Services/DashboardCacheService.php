@@ -8,6 +8,7 @@ use App\Models\Contract;
 use App\Models\Sale;
 use App\Models\Attendance;
 use App\Models\WalkinAttendance;
+use App\Models\MembershipFee;
 use Carbon\Carbon;
 
 class DashboardCacheService
@@ -20,6 +21,33 @@ class DashboardCacheService
             $today = Carbon::today();
             $thisMonth = Carbon::now()->startOfMonth();
 
+            // Calculate sales revenue
+            $salesToday = (float) Sale::whereDate('created_at', $today)->sum('payment_amount');
+            $salesThisMonth = (float) Sale::where('created_at', '>=', $thisMonth)->sum('payment_amount');
+            $salesLastWeek = (float) Sale::where('created_at', '>=', Carbon::now()->subDays(7))->sum('payment_amount');
+
+            // Calculate contract revenue
+            $contractToday = (float) Contract::whereDate('created_at', $today)
+                ->where('payment_status', 'paid')
+                ->sum('payment_amount');
+            $contractThisMonth = (float) Contract::where('created_at', '>=', $thisMonth)
+                ->where('payment_status', 'paid')
+                ->sum('payment_amount');
+            $contractLastWeek = (float) Contract::where('created_at', '>=', Carbon::now()->subDays(7))
+                ->where('payment_status', 'paid')
+                ->sum('payment_amount');
+
+            // Calculate membership fee revenue
+            $membershipToday = (float) MembershipFee::whereDate('created_at', $today)
+                ->where('payment_status', 'paid')
+                ->sum('payment_amount');
+            $membershipThisMonth = (float) MembershipFee::where('created_at', '>=', $thisMonth)
+                ->where('payment_status', 'paid')
+                ->sum('payment_amount');
+            $membershipLastWeek = (float) MembershipFee::where('created_at', '>=', Carbon::now()->subDays(7))
+                ->where('payment_status', 'paid')
+                ->sum('payment_amount');
+
             return [
                 'members' => [
                     'total' => Member::count(),
@@ -29,18 +57,29 @@ class DashboardCacheService
                 'contracts' => [
                     'active' => Contract::where('contract_to', '>=', $today)->count(),
                     'expiring_soon' => Contract::whereBetween('contract_to', [$today, $today->copy()->addDays(7)])->count(),
+                    'revenue_today' => $contractToday,
+                    'revenue_this_month' => $contractThisMonth,
+                    'revenue_last_week' => $contractLastWeek,
+                ],
+                'membership_fees' => [
+                    'revenue_today' => $membershipToday,
+                    'revenue_this_month' => $membershipThisMonth,
+                    'revenue_last_week' => $membershipLastWeek,
                 ],
                 'sales' => [
-                    'today' => (float) Sale::whereBetween('created_at', [$today, $today->copy()->endOfDay()])->sum('payment_amount'),
-                    'this_month' => (float) Sale::where('created_at', '>=', $thisMonth)->sum('payment_amount'),
-                    'last_week' => (float) Sale::whereBetween('created_at', [Carbon::now()->subDays(7), $today])->sum('payment_amount'),
+                    'today' => $salesToday,
+                    'this_month' => $salesThisMonth,
+                    'last_week' => $salesLastWeek,
+                    'total_today' => $salesToday + $contractToday + $membershipToday,
+                    'total_this_month' => $salesThisMonth + $contractThisMonth + $membershipThisMonth,
+                    'total_last_week' => $salesLastWeek + $contractLastWeek + $membershipLastWeek,
                 ],
                 'attendance' => [
-                    'today' => Attendance::whereBetween('time_in', [$today, $today->copy()->endOfDay()])->count(),
+                    'today' => Attendance::whereDate('time_in', $today)->count(),
                     'this_month' => Attendance::where('time_in', '>=', $thisMonth)->count(),
                 ],
                 'walkins' => [
-                    'today' => WalkinAttendance::whereBetween('time_in', [$today, $today->copy()->endOfDay()])->count(),
+                    'today' => WalkinAttendance::whereDate('time_in', $today)->count(),
                     'this_month' => WalkinAttendance::where('time_in', '>=', $thisMonth)->count(),
                 ],
                 'recent_sales' => Sale::latest()->limit(5)->get()->map(function ($sale) {
@@ -51,7 +90,20 @@ class DashboardCacheService
                         'or_number' => $sale->or_number,
                         'created_at' => $sale->created_at->diffForHumans(),
                     ];
-                })->toArray(), // ensure it's an array
+                })->toArray(),
+                'recent_contracts' => Contract::where('payment_status', 'paid')
+                    ->latest()
+                    ->limit(5)
+                    ->get()
+                    ->map(function ($contract) {
+                        return [
+                            'id' => $contract->id,
+                            'member_name' => $contract->member->firstname . ' ' . $contract->member->lastname ?? 'N/A',
+                            'amount' => (float) $contract->payment_amount,
+                            'or_number' => $contract->or_number ?? 'N/A',
+                            'created_at' => $contract->created_at->diffForHumans(),
+                        ];
+                    })->toArray(),
             ];
         });
     }
@@ -60,26 +112,60 @@ class DashboardCacheService
     {
         $cacheKey = "sales_trend_{$days}";
         return Cache::remember($cacheKey, $this->ttl, function () use ($days) {
-            $startDate = Carbon::now()->subDays($days)->startOfDay();
-            $data = Sale::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
+            $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+            
+            $salesData = Sale::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
                 ->where('created_at', '>=', $startDate)
                 ->groupBy('date')
                 ->orderBy('date', 'asc')
                 ->get()
                 ->keyBy('date');
 
-            // Fill missing days with 0
+            $contractData = Contract::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
+                ->where('created_at', '>=', $startDate)
+                ->where('payment_status', 'paid')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get()
+                ->keyBy('date');
+
+            $membershipData = MembershipFee::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
+                ->where('created_at', '>=', $startDate)
+                ->where('payment_status', 'paid')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get()
+                ->keyBy('date');
+
             $labels = [];
-            $values = [];
+            $salesValues = [];
+            $contractValues = [];
+            $membershipValues = [];
+            $totalValues = [];
+
             for ($i = $days - 1; $i >= 0; $i--) {
                 $date = Carbon::now()->subDays($i)->toDateString();
                 $labels[] = Carbon::parse($date)->format('M d');
-                $values[] = (float) ($data[$date]->total ?? 0);
+                
+                $sales = (float) ($salesData[$date]->total ?? 0);
+                $contracts = (float) ($contractData[$date]->total ?? 0);
+                $memberships = (float) ($membershipData[$date]->total ?? 0);
+                
+                $salesValues[] = $sales;
+                $contractValues[] = $contracts;
+                $membershipValues[] = $memberships;
+                $totalValues[] = $sales + $contracts + $memberships;
             }
 
-            return ['labels' => $labels, 'values' => $values];
+            return [
+                'labels' => $labels,
+                'values' => $totalValues,
+                'breakdown' => [
+                    'sales' => $salesValues,
+                    'contracts' => $contractValues,
+                    'membership_fees' => $membershipValues,
+                ],
+            ];
         });
     }
-
-    // Add similar methods for other report metrics...
 }

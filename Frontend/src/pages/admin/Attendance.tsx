@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
 import { attendanceApi } from '../../services/admin/attendanceApi';
 import { memberApi } from '../../services/admin/memberApi';
-import type { Attendance, AttendanceFilters } from '../../types/Attendance';
+import type { Attendance } from '../../types/Attendance';
 import type { Member } from '../../types/Members';
 import { CreateAttendanceModal } from '../../components/Attendance/CreateAttendanceModal';
 // import { UpdateAttendanceModal } from '../../components/Attendance/UpdateAttendanceModal';
@@ -11,7 +11,7 @@ import { ViewAttendanceModal } from '../../components/Attendance/ViewAttendanceM
 import { QRScanner } from '../../components/Attendance/QRScanner';
 import { MemberScanResultModal } from '../../components/Attendance/MemberScanResultModal';
 import toast from 'react-hot-toast';
-import { Plus, Search, Eye, Pencil, Trash2, QrCode, Calendar, Clock } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, Trash2, QrCode, Clock } from 'lucide-react';
 
 export const AttendancePage = () => {
   const [attendances, setAttendances] = useState<Attendance[]>([]);
@@ -22,9 +22,7 @@ export const AttendancePage = () => {
   const [page, setPage] = useState(1);
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [updateOpen, setUpdateOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
 
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -66,15 +64,6 @@ export const AttendancePage = () => {
     setViewOpen(true);
   };
 
-  const openUpdate = (attendance: Attendance) => {
-    setSelectedAttendance(attendance);
-    setUpdateOpen(true);
-  };
-
-  const openDelete = (attendance: Attendance) => {
-    setSelectedAttendance(attendance);
-    setDeleteOpen(true);
-  };
 
   const handleSuccess = () => {
     fetchAttendances();
@@ -245,12 +234,8 @@ export const AttendancePage = () => {
                           <button onClick={() => openView(attendance)} className="p-1.5 text-blue-400 hover:text-white border border-blue-400/30 hover:bg-blue-500/20 rounded-lg transition group-hover:border-blue-400/60" title="View">
                             <Eye size={16} />
                           </button>
-                          <button onClick={() => openUpdate(attendance)} className="p-1.5 text-yellow-400 hover:text-white border border-yellow-400/30 hover:bg-yellow-500/20 rounded-lg transition group-hover:border-yellow-400/60" title="Edit">
-                            <Pencil size={16} />
-                          </button>
-                          <button onClick={() => openDelete(attendance)} className="p-1.5 text-red-400 hover:text-white border border-red-400/30 hover:bg-red-500/20 rounded-lg transition group-hover:border-red-400/60" title="Delete">
-                            <Trash2 size={16} />
-                          </button>
+                        
+                         
                         </div>
                       </td>
                     </tr>

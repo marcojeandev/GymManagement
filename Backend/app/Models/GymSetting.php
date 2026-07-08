@@ -14,14 +14,7 @@ class GymSetting extends Model
         'description',
         'location',
         'email',
-        'contact',
-        'social_links',
-        'gallery',
-        'features',
-        'pricing',
-        'favicon',
-        'primary_color',
-        'secondary_color',
+        'contact'
     ];
 
     protected $casts = [

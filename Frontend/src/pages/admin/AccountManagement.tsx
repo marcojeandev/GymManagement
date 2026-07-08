@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
 import { userApi } from '../../services/admin/userApi';
-import type { User, UserFilters } from '../../types/User';
+import type { User } from '../../types/User';
 import { CreateUserModal } from '../../components/User/CreateUserModal';
 import { UpdateUserModal } from '../../components/User/UpdateUserModal';
 import { ChangePasswordModal } from '../../components/User/ChangePasswordModal';
 import { DeleteUserModal } from '../../components/User/DeleteUserModal';
 import toast from 'react-hot-toast';
-import { Plus, Search, Eye, Pencil, Trash2, Key, Users } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Key, Users } from 'lucide-react';
 
 export const AccountManagementPage = () => {
   const [users, setUsers] = useState<User[]>([]);

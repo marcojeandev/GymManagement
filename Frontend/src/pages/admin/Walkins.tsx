@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '../../layouts/AdminLayout';
 import { walkinApi } from '../../services/admin/walkinApi';
-import type { WalkinInfo, WalkinInfoFilters } from '../../types/WalkinInfo';
+import type { WalkinInfo } from '../../types/WalkinInfo';
 import { CreateWalkinModal } from '../../components/Walkin/CreateWalkinModal';
 import { UpdateWalkinModal } from '../../components/Walkin/UpdateWalkinModal';
 import { ViewWalkinModal } from '../../components/Walkin/ViewWalkinModal';

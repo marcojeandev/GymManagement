@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CashierLayout } from '../../layouts/CashierLayout';
 import { walkinApi } from '../../services/cashier/walkinApi';
-import type { WalkinInfo, WalkinInfoFilters } from '../../types/WalkinInfo';
+import type { WalkinInfo } from '../../types/WalkinInfo';
 import { CreateWalkinModal } from '../../components/cashier/Walkin/CreateWalkinModal';
 import { UpdateWalkinModal } from '../../components/cashier/Walkin/UpdateWalkinModal';
 import { ViewWalkinModal } from '../../components/cashier/Walkin/ViewWalkinModal';

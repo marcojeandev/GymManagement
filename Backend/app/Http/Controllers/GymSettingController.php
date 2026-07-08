@@ -38,14 +38,7 @@ class GymSettingController extends Controller
             'location'    => 'nullable|string',
             'email'       => 'nullable|email',
             'contact'     => 'nullable|string|max:20',
-            'social_links'=> 'nullable|array',
-            'features'    => 'nullable|array',
-            'pricing'     => 'nullable|array',
-            'primary_color'   => 'nullable|string',
-            'secondary_color' => 'nullable|string',
             'logo'    => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'favicon' => 'nullable|image|mimes:ico,png|max:512',
-            'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             // ── Admin account ─────────────────────────────
             'admin_name'     => 'required|string|max:255',
             'admin_email'    => 'required|email|unique:users,email',
@@ -65,19 +58,6 @@ class GymSettingController extends Controller
             if ($request->hasFile('logo')) {
                 if ($settings->logo) Storage::delete('public/' . $settings->logo);
                 $settings->logo = $request->file('logo')->store('gym-logos', 'public');
-            }
-
-            if ($request->hasFile('favicon')) {
-                if ($settings->favicon) Storage::delete('public/' . $settings->favicon);
-                $settings->favicon = $request->file('favicon')->store('gym-favicons', 'public');
-            }
-
-            if ($request->hasFile('gallery')) {
-                $gallery = [];
-                foreach ($request->file('gallery') as $file) {
-                    $gallery[] = $file->store('gym-gallery', 'public');
-                }
-                $settings->gallery = $gallery;
             }
 
             $settings->save();

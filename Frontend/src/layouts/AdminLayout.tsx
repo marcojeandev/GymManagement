@@ -48,19 +48,36 @@ const navGroups: NavGroup[] = [
 
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [gymLogo, setGymLogo] = useState<string | null>(null);
+  const [gymName, setGymName] = useState<string>('Gym Management');
   const [openGroups, setOpenGroups] = useState<string[]>([
     'Management', 'Sales', 'Attendance', 'Reports', 'Administration',
   ]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    systemSettingsApi.getGymSettings().then((settings) => {
-      if (settings?.logo) {
-        setGymLogo(`http://localhost:8000/storage/${settings.logo}`);
-      }
-    });
+    // ✅ Fetch gym settings to get logo
+    systemSettingsApi.getGymSettings()
+      .then((settings) => {
+        console.log('Gym settings:', settings);
+        
+        if (settings) {
+          // ✅ CORRECT: Use the logo path directly from database
+          if (settings.logo) {
+            // The logo is stored as "logos/gym-logo-default.svg" or similar
+            const logoUrl = `http://localhost:8000/storage/${settings.logo}`;
+            console.log('Logo URL:', logoUrl);
+            setGymLogo(logoUrl);
+          }
+          if (settings.gym_name) {
+            setGymName(settings.gym_name);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching gym settings:', error);
+      });
   }, []);
 
   const toggleGroup = (title: string) => {
@@ -86,7 +103,6 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
 
-  // Close mobile menu on resize to desktop
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768 && isMobileMenuOpen) {
@@ -104,7 +120,20 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-lg font-bold text-white shadow-lg flex-shrink-0 overflow-hidden">
             {gymLogo ? (
-              <img src={gymLogo} alt="Gym Logo" className="h-full w-full object-cover" />
+              <img 
+                src={gymLogo} 
+                alt={gymName} 
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  // ✅ Fallback if image fails to load
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    parent.textContent = user?.name?.charAt(0).toUpperCase() || 'A';
+                    parent.className = 'h-10 w-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-lg font-bold text-white shadow-lg flex-shrink-0';
+                  }
+                }}
+              />
             ) : (
               user?.name?.charAt(0).toUpperCase() || 'A'
             )}
@@ -144,7 +173,19 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-14 w-14 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg flex-shrink-0 overflow-hidden">
               {gymLogo ? (
-                <img src={gymLogo} alt="Gym Logo" className="h-full w-full object-cover" />
+                <img 
+                  src={gymLogo} 
+                  alt={gymName} 
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      parent.textContent = user?.name?.charAt(0).toUpperCase() || 'A';
+                      parent.className = 'h-14 w-14 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg flex-shrink-0';
+                    }
+                  }}
+                />
               ) : (
                 user?.name?.charAt(0).toUpperCase() || 'A'
               )}

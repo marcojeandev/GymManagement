@@ -9,7 +9,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   LineChart,
   Line,
@@ -38,12 +37,12 @@ export const ReportsPage = () => {
   const [overview, setOverview] = useState<any>(null);
   const [memberGrowth, setMemberGrowth] = useState<any>(null);
   const [salesTrend, setSalesTrend] = useState<any>(null);
-  const [topProducts, setTopProducts] = useState<any>(null);
+  const [topProducts, setTopProducts] = useState<any>([]);
   const [attendanceTrend, setAttendanceTrend] = useState<any>(null);
   const [salesByPayment, setSalesByPayment] = useState<any>([]);
-  const [membershipDist, setMembershipDist] = useState<any>(null);
-  const [contractDist, setContractDist] = useState<any>(null);
-  const [attendanceDist, setAttendanceDist] = useState<any>(null);
+  const [membershipDist, setMembershipDist] = useState<any>([]);
+  const [contractDist, setContractDist] = useState<any>([]);
+  const [attendanceDist, setAttendanceDist] = useState<any>([]);
   const [revenue, setRevenue] = useState<any>(null);
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
@@ -81,17 +80,27 @@ export const ReportsPage = () => {
         reportsApi.getRevenue(dateRange.start, dateRange.end),
       ]);
 
-      setOverview(overviewData);
-      setMemberGrowth(memberGrowthData);
-      setSalesTrend(salesTrendData);
-      setTopProducts(topProductsData);
-      setAttendanceTrend(attendanceTrendData);
-      setSalesByPayment(salesByPaymentData || []);
-      setMembershipDist(membershipDistData);
-      setContractDist(contractDistData);
-      setAttendanceDist(attendanceDistData);
-      setRevenue(revenueData);
+      // ✅ Ensure all data is properly extracted from API responses
+      setOverview(overviewData?.data || overviewData || null);
+      setMemberGrowth(memberGrowthData?.data || memberGrowthData || null);
+      setSalesTrend(salesTrendData?.data || salesTrendData || null);
+      setTopProducts(Array.isArray(topProductsData?.data) ? topProductsData.data : (Array.isArray(topProductsData) ? topProductsData : []));
+      setAttendanceTrend(attendanceTrendData?.data || attendanceTrendData || null);
+      setSalesByPayment(Array.isArray(salesByPaymentData?.data) ? salesByPaymentData.data : (Array.isArray(salesByPaymentData) ? salesByPaymentData : []));
+      
+      // ✅ Ensure these are always arrays
+      const membershipData = membershipDistData?.data || membershipDistData || [];
+      setMembershipDist(Array.isArray(membershipData) ? membershipData : []);
+      
+      const contractData = contractDistData?.data || contractDistData || [];
+      setContractDist(Array.isArray(contractData) ? contractData : []);
+      
+      const attendanceData = attendanceDistData?.data || attendanceDistData || [];
+      setAttendanceDist(Array.isArray(attendanceData) ? attendanceData : []);
+      
+      setRevenue(revenueData?.data || revenueData || null);
     } catch (error) {
+      console.error('Reports fetch error:', error);
       toast.error('Failed to load reports');
     } finally {
       setLoading(false);
@@ -174,6 +183,13 @@ export const ReportsPage = () => {
     attendanceDist?.forEach((item: any) => {
       csv += `${item.type},${item.count}\n`;
     });
+    csv += '\n';
+
+    csv += 'REVENUE BREAKDOWN\n';
+    csv += `Total Revenue,${formatCurrency(revenue?.total_revenue || 0)}\n`;
+    csv += `Product Sales,${formatCurrency(revenue?.breakdown?.sales || 0)}\n`;
+    csv += `Contracts,${formatCurrency(revenue?.breakdown?.contracts || 0)}\n`;
+    csv += `Membership Fees,${formatCurrency(revenue?.breakdown?.membership_fees || 0)}\n`;
     csv += '\n';
 
     csv += `TOTAL REVENUE (Period),${formatCurrency(revenue?.total_revenue || 0)}\n`;
@@ -351,7 +367,7 @@ export const ReportsPage = () => {
             </div>
 
             {/* Sales Trend */}
-            {/* <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
+            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <DollarSign size={20} className="text-yellow-400" />
                 Sales Trend (Last 30 Days)
@@ -368,7 +384,7 @@ export const ReportsPage = () => {
                   <Bar dataKey="sales" fill="#ef4444" />
                 </BarChart>
               </ResponsiveContainer>
-            </div> */}
+            </div>
 
             {/* Top Products */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
@@ -409,7 +425,7 @@ export const ReportsPage = () => {
             </div>
 
             {/* Sales by Payment Type */}
-            {/* <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
+            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4">Sales by Payment Type</h3>
               {paymentData.some((item: any) => item.total > 0 || item.count > 0) ? (
                 <ResponsiveContainer width="100%" height={250}>
@@ -441,52 +457,59 @@ export const ReportsPage = () => {
                   </div>
                 </div>
               )}
-            </div> */}
+            </div>
 
-            {/* Membership Distribution */}
+            {/* Membership Distribution - FIXED */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4">Membership Status</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={membershipDist || []}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="count"
-                    nameKey="membership_status"
-                  >
-                    {membershipDist?.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.membership_status === 'active' ? '#22c55e' : '#ef4444'} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
-                </PieChart>
-              </ResponsiveContainer>
+              {membershipDist && Array.isArray(membershipDist) && membershipDist.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={membershipDist}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="count"
+                      nameKey="membership_status"
+                    >
+                      {membershipDist.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.membership_status === 'active' ? '#22c55e' : '#ef4444'} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-gray-400">
+                  <div className="text-center">
+                    <Users size={48} className="mx-auto text-gray-600 mb-2" />
+                    <p>No membership data available</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Additional Stats – FIXED: Attendance Distribution and Revenue */}
+          {/* Additional Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            {/* Walk-ins Total */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5 print-card">
               <p className="text-gray-400 text-sm">Walk-ins (Total)</p>
               <p className="text-2xl font-bold text-white">{overview?.walkins?.total || 0}</p>
               <p className="text-xs text-gray-500 mt-1">Today: {overview?.walkins?.today || 0}</p>
             </div>
 
-            {/* Attendance (Member vs Walk-in) – ACCURATE */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5 print-card">
               <p className="text-gray-400 text-sm">Attendance (Member vs Walk-in)</p>
               <div className="flex gap-4 mt-1">
                 <span className="text-blue-400">
-                  Members: {attendanceDist?.find((d: any) => d.type === 'Members')?.count || 0}
+                  Members: {Array.isArray(attendanceDist) ? attendanceDist.find((d: any) => d.type === 'Members')?.count || 0 : 0}
                 </span>
                 <span className="text-yellow-400">
-                  Walk-ins: {attendanceDist?.find((d: any) => d.type === 'Walk-ins')?.count || 0}
+                  Walk-ins: {Array.isArray(attendanceDist) ? attendanceDist.find((d: any) => d.type === 'Walk-ins')?.count || 0 : 0}
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -494,7 +517,6 @@ export const ReportsPage = () => {
               </p>
             </div>
 
-            {/* Total Revenue (Period) – ACCURATE */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5 print-card">
               <p className="text-gray-400 text-sm">Total Revenue (Period)</p>
               <p className="text-2xl font-bold text-white">
@@ -504,6 +526,67 @@ export const ReportsPage = () => {
                 {dateRange.start} – {dateRange.end}
               </p>
             </div>
+          </div>
+
+          {/* Revenue Breakdown */}
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card mb-8">
+            <h3 className="text-lg font-semibold text-white mb-4">Revenue Breakdown</h3>
+            {revenue?.breakdown ? (
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="bg-gray-800/50 rounded-lg p-4 text-center">
+                  <p className="text-gray-400 text-sm">Total Revenue</p>
+                  <p className="text-2xl font-bold text-white">{formatCurrency(revenue.total_revenue || 0)}</p>
+                </div>
+                <div className="bg-blue-900/20 rounded-lg p-4 text-center border border-blue-500/30">
+                  <p className="text-gray-400 text-sm">Product Sales</p>
+                  <p className="text-2xl font-bold text-blue-400">{formatCurrency(revenue.breakdown.sales || 0)}</p>
+                </div>
+                <div className="bg-green-900/20 rounded-lg p-4 text-center border border-green-500/30">
+                  <p className="text-gray-400 text-sm">Contracts</p>
+                  <p className="text-2xl font-bold text-green-400">{formatCurrency(revenue.breakdown.contracts || 0)}</p>
+                </div>
+                <div className="bg-purple-900/20 rounded-lg p-4 text-center border border-purple-500/30">
+                  <p className="text-gray-400 text-sm">Membership Fees</p>
+                  <p className="text-2xl font-bold text-purple-400">{formatCurrency(revenue.breakdown.membership_fees || 0)}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-400 py-8">No revenue data available</div>
+            )}
+          </div>
+
+          {/* Contract Status Distribution */}
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
+            <h3 className="text-lg font-semibold text-white mb-4">Contract Status</h3>
+            {contractDist && Array.isArray(contractDist) && contractDist.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={contractDist}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="count"
+                    nameKey="status"
+                  >
+                    {contractDist.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={entry.status === 'active' ? '#22c55e' : '#ef4444'} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[250px] text-gray-400">
+                <div className="text-center">
+                  <FileText size={48} className="mx-auto text-gray-600 mb-2" />
+                  <p>No contract data available</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

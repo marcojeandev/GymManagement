@@ -4,7 +4,7 @@ import { memberApi } from '../../../services/cashier/memberApi';
 import { systemSettingsApi } from '../../../services/cashier/systemSettingsApi';
 import type { MembershipPrice } from '../../../services/cashier/systemSettingsApi';
 import type { Member, MemberFormData } from '../../../types/Members';
-import { X, Camera, Upload } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 
 interface UpdateMemberModalProps {
   isOpen: boolean;

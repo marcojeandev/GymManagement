@@ -44,12 +44,15 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::get('/gym-icon', [PublicSettingsController::class, 'getGymIcon']);
+Route::get('/manifest.json', [PublicSettingsController::class, 'getManifest']);
+
 Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function (){
-        // Dashboard Management
         Route::get('dashboard', [DashboardController::class, 'index']);
+        Route::get('sales-trend', [DashboardController::class, 'salesTrend']); 
 
         // Users Management 
         Route::apiResource('users', UserController::class);
@@ -103,17 +106,16 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])
             Route::get('attendance-distribution', [ReportsController::class, 'attendanceDistribution']);
             Route::get('revenue', [ReportsController::class, 'revenueBreakdown']);
         });
-
-        Route::get('/gym-icon', [PublicSettingsController::class, 'getGymIcon']);
+        Route::post('reports/clear-cache', [ReportsController::class, 'clearCache']);
     });
 
 Route::middleware(['auth:sanctum', 'cashier', 'throttle:60,1'])
     ->prefix('cashier')
     ->name('cashier.')
     ->group(function (){
-        // Dashboard Management
-        Route::get('dashboard', [DashboardController::class, 'index']);
-
+        
+        Route::get('dashboard', [CashierDashboardController::class, 'index']);
+        Route::get('sales-trend', [CashierDashboardController::class, 'salesTrend']);
 
         // Members Management
         Route::apiResource('members', CashierMembersController::class);

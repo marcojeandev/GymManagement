@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { productApi } from '../../services/admin/productApi';
-import type { ProductFormData } from '../../types/Product';
 import { X, Upload } from 'lucide-react';
 
 interface CreateProductModalProps {

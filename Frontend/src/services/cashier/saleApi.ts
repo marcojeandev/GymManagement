@@ -1,5 +1,5 @@
 import api from '.././api';
-import type { Sale, SaleFilters } from '../../types/Sale';
+import type { SaleFilters } from '../../types/Sale';
 
 export const saleApi = {
   async getSales(filters: SaleFilters = {}) {

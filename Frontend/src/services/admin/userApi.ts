@@ -1,5 +1,5 @@
 import api from '.././api';
-import type { User, UserFilters } from '../../types/User';
+import type { UserFilters } from '../../types/User';
 
 export const userApi = {
   async getUsers(filters: UserFilters = {}) {

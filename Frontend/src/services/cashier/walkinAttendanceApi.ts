@@ -1,5 +1,5 @@
 import api from '.././api';
-import type { WalkinAttendance, WalkinAttendanceFilters } from '../../types/WalkinAttendance';
+import type { WalkinAttendanceFilters } from '../../types/WalkinAttendance';
 
 export const walkinAttendanceApi = {
   async getAttendances(filters: WalkinAttendanceFilters = {}) {

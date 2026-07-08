@@ -20,7 +20,7 @@ export const CreateAttendanceModal = ({ isOpen, onClose, onSuccess }: CreateAtte
   const [loading, setLoading] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [todayAttendance, setTodayAttendance] = useState<any>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  // const [setIsEditing] = useState(false);
 
   // Load members when modal opens
   useEffect(() => {
@@ -29,7 +29,7 @@ export const CreateAttendanceModal = ({ isOpen, onClose, onSuccess }: CreateAtte
       // Reset form when modal opens (no member selected yet)
       setForm({ members_id: '', time_in: '', time_out: '' });
       setTodayAttendance(null);
-      setIsEditing(false);
+      // setIsEditing(false);
     }
   }, [isOpen]);
 
@@ -50,7 +50,7 @@ export const CreateAttendanceModal = ({ isOpen, onClose, onSuccess }: CreateAtte
     const id = e.target.value;
     setForm((prev) => ({ ...prev, members_id: id, time_in: '', time_out: '' }));
     setTodayAttendance(null);
-    setIsEditing(false);
+    // setIsEditing(false);
 
     if (!id) return;
 
@@ -67,7 +67,7 @@ export const CreateAttendanceModal = ({ isOpen, onClose, onSuccess }: CreateAtte
       if (records.length > 0) {
         const record = records[0];
         setTodayAttendance(record);
-        setIsEditing(true);
+        // setIsEditing(true);
 
         // Format datetime-local value (YYYY-MM-DDTHH:mm)
         const formatDatetimeLocal = (dateStr: string) => {
@@ -85,13 +85,13 @@ export const CreateAttendanceModal = ({ isOpen, onClose, onSuccess }: CreateAtte
       } else {
         // No attendance today – leave fields empty
         setTodayAttendance(null);
-        setIsEditing(false);
+        // setIsEditing(false);
         setForm((prev) => ({ ...prev, time_in: '', time_out: '' }));
       }
     } catch (error) {
       console.error('Error fetching today\'s attendance:', error);
       setTodayAttendance(null);
-      setIsEditing(false);
+      // setIsEditing(false);
       setForm((prev) => ({ ...prev, time_in: '', time_out: '' }));
     }
   };
@@ -127,7 +127,7 @@ export const CreateAttendanceModal = ({ isOpen, onClose, onSuccess }: CreateAtte
   const handleClose = () => {
     setForm({ members_id: '', time_in: '', time_out: '' });
     setTodayAttendance(null);
-    setIsEditing(false);
+    // setIsEditing(false);
     onClose();
   };
 

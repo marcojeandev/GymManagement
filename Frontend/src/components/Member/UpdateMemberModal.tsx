@@ -4,7 +4,7 @@ import { memberApi } from '../../services/admin/memberApi';
 import { systemSettingsApi } from '../../services/admin/systemSettingsApi';
 import type { MembershipPrice } from '../../services/admin/systemSettingsApi';
 import type { Member, MemberFormData } from '../../types/Members';
-import { X, Camera, Upload } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 
 interface UpdateMemberModalProps {
   isOpen: boolean;

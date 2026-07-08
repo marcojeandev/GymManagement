@@ -19,13 +19,6 @@ return new class extends Migration
             $table->text('location')->nullable();
             $table->text('email')->nullable();
             $table->text('contact')->nullable();
-            $table->json('social_links')->nullable();
-            $table->json('gallery')->nullable();
-            $table->json('features')->nullable();
-            $table->json('pricing')->nullable();
-            $table->string('favicon')->nullable();
-            $table->string('primary_color')->default('#ef4444');
-            $table->string('secondary_color')->default('#dc2626');
             $table->timestamps();
         });
     }

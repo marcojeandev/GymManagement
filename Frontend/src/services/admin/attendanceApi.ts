@@ -1,5 +1,5 @@
 import api from '.././api';
-import type { Attendance, AttendanceFilters } from '../../types/Attendance';
+import type { AttendanceFilters } from '../../types/Attendance';
 
 export const attendanceApi = {
     async getAttendances(filters: AttendanceFilters = {}) {

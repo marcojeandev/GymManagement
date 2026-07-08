@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\DashboardCacheService;
-
+use App\Services\CashierDashboardCacheService;
+    
 class DashboardController extends Controller
 {
     protected $cacheService;
 
-    public function __construct(DashboardCacheService $cacheService)
+    public function __construct(CashierDashboardCacheService $cacheService)
     {
         $this->cacheService = $cacheService;
     }

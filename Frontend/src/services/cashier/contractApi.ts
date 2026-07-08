@@ -1,5 +1,5 @@
 import api from '.././api';
-import type { Contract, ContractFilters, ContractPricing } from '../../types/Contract';
+import type { ContractFilters, ContractPricing } from '../../types/Contract';
 
 export const contractApi = {
   async getContracts(filters: ContractFilters = {}) {

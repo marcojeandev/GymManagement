@@ -1,5 +1,5 @@
 import api from '.././api';
-import type { WalkinInfo, WalkinInfoFilters } from '../../types/WalkinInfo';
+import type { WalkinInfoFilters } from '../../types/WalkinInfo';
 
 export const walkinApi = {
   async getWalkins(filters: WalkinInfoFilters = {}) {

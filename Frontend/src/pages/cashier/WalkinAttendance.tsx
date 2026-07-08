@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CashierLayout } from '../../layouts/CashierLayout';
 import { walkinAttendanceApi } from '../../services/cashier/walkinAttendanceApi';
-import type { WalkinAttendance, WalkinAttendanceFilters } from '../../types/WalkinAttendance';
+import type { WalkinAttendance } from '../../types/WalkinAttendance';
 import { CreateWalkinAttendanceModal } from '../../components/cashier/WalkinAttendance/CreateWalkinAttendanceModal';
 import { UpdateWalkinAttendanceModal } from '../../components/cashier/WalkinAttendance/UpdateWalkinAttendanceModal';
 import { ViewWalkinAttendanceModal } from '../../components/cashier/WalkinAttendance/ViewWalkinAttendanceModal';

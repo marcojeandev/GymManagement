@@ -10,7 +10,6 @@ interface NavGroup {
   items: { label: string; path: string }[];
 }
 
-// ✅ Updated to use cashier routes
 const navGroups: NavGroup[] = [
   {
     title: 'Management',
@@ -38,21 +37,29 @@ const navGroups: NavGroup[] = [
 
 export const CashierLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [gymLogo, setGymLogo] = useState<string | null>(null);
+  const [gymName, setGymName] = useState<string>('Gym Management');
   const [openGroups, setOpenGroups] = useState<string[]>(['Management', 'Sales', 'Attendance']);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // ✅ Fetch gym logo with error handling – falls back silently
   useEffect(() => {
     systemSettingsApi.getGymSettings()
       .then((settings) => {
-        if (settings?.logo) {
-          setGymLogo(`http://localhost:8000/storage/${settings.logo}`);
+        if (settings) {
+          if (settings.logo) {
+            // ✅ CORRECT: Use the logo path directly from database
+            const logoUrl = `http://localhost:8000/storage/${settings.logo}`;
+            console.log('Cashier Logo URL:', logoUrl);
+            setGymLogo(logoUrl);
+          }
+          if (settings.gym_name) {
+            setGymName(settings.gym_name);
+          }
         }
       })
-      .catch(() => {
-        // Silently ignore – logo stays null, user initial will be used
+      .catch((error) => {
+        console.error('Error fetching gym settings:', error);
       });
   }, []);
 
@@ -79,7 +86,6 @@ export const CashierLayout: React.FC<{ children: React.ReactNode }> = ({ childre
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
 
-  // Close mobile menu on resize to desktop
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768 && isMobileMenuOpen) {
@@ -97,7 +103,19 @@ export const CashierLayout: React.FC<{ children: React.ReactNode }> = ({ childre
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-lg font-bold text-white shadow-lg flex-shrink-0 overflow-hidden">
             {gymLogo ? (
-              <img src={gymLogo} alt="Gym Logo" className="h-full w-full object-cover" />
+              <img 
+                src={gymLogo} 
+                alt={gymName} 
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    parent.textContent = user?.name?.charAt(0).toUpperCase() || 'C';
+                    parent.className = 'h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-lg font-bold text-white shadow-lg flex-shrink-0';
+                  }
+                }}
+              />
             ) : (
               user?.name?.charAt(0).toUpperCase() || 'C'
             )}
@@ -137,7 +155,19 @@ export const CashierLayout: React.FC<{ children: React.ReactNode }> = ({ childre
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg flex-shrink-0 overflow-hidden">
               {gymLogo ? (
-                <img src={gymLogo} alt="Gym Logo" className="h-full w-full object-cover" />
+                <img 
+                  src={gymLogo} 
+                  alt={gymName} 
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      parent.textContent = user?.name?.charAt(0).toUpperCase() || 'C';
+                      parent.className = 'h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-2xl font-bold text-white shadow-lg flex-shrink-0';
+                    }
+                  }}
+                />
               ) : (
                 user?.name?.charAt(0).toUpperCase() || 'C'
               )}

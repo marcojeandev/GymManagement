@@ -1,5 +1,5 @@
 import type { Attendance } from '../../types/Attendance';
-import { X, User, Calendar, Clock } from 'lucide-react';
+import { X, Calendar, Clock } from 'lucide-react';
 
 interface ViewAttendanceModalProps {
   isOpen: boolean;

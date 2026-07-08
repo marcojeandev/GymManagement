@@ -7,11 +7,22 @@ export interface DashboardData {
   contracts: {
     active: number;
     expiring_soon: number;
+    revenue_today: number;
+    revenue_this_month: number;
+    revenue_last_week: number;
+  };
+  membership_fees: {
+    revenue_today: number;
+    revenue_this_month: number;
+    revenue_last_week: number;
   };
   sales: {
     today: number;
     this_month: number;
     last_week: number;
+    total_today: number;
+    total_this_month: number;
+    total_last_week: number;
   };
   attendance: {
     today: number;
@@ -28,9 +39,21 @@ export interface DashboardData {
     or_number: string;
     created_at: string;
   }>;
+  recent_contracts: Array<{
+    id: number;
+    member_name: string;
+    amount: number;
+    or_number: string;
+    created_at: string;
+  }>;
 }
 
 export interface DashboardTrend {
   labels: string[];
   values: number[];
+  breakdown?: {
+    sales: number[];
+    contracts: number[];
+    membership_fees: number[];
+  };
 }

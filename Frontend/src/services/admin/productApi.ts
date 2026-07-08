@@ -1,5 +1,5 @@
 import api from '.././api';
-import type { Product, ProductFilters } from '../../types/Product';
+import type { ProductFilters } from '../../types/Product';
 
 export const productApi = {
   async getProducts(filters: ProductFilters = {}) {

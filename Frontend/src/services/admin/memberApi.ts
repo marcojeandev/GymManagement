@@ -1,5 +1,5 @@
 import api from '.././api';
-import type { Member, MemberFilters } from '../../types/Members';
+import type { MemberFilters } from '../../types/Members';
 
 export const memberApi = {
   async getMembers(filters: MemberFilters = {}) {

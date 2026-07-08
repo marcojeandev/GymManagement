@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { memberApi } from '../../../services/cashier/memberApi';
 import api from '../../../services/api';
 
 interface MemberSearchSelectProps {

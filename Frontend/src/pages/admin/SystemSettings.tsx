@@ -3,7 +3,7 @@ import { AdminLayout } from '../../layouts/AdminLayout';
 import { systemSettingsApi } from '../../services/admin/systemSettingsApi';
 import type { MembershipPrice, ContractPrice, GymSetting } from '../../services/admin/systemSettingsApi';
 import toast from 'react-hot-toast';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, Pencil, Trash2} from 'lucide-react';
 
 type TabType = 'gym' | 'membership' | 'contract';
 
@@ -23,10 +23,8 @@ export const SystemSettingsPage = () => {
     primary_color: '#ef4444',
     secondary_color: '#dc2626',
     logo: null as File | null,
-    favicon: null as File | null,
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [faviconPreview, setFaviconPreview] = useState<string | null>(null);
 
   // ---------- Membership ----------
   const [membership, setMembership] = useState<MembershipPrice | null>(null);
@@ -66,10 +64,8 @@ export const SystemSettingsPage = () => {
           primary_color: gymData.primary_color || '#ef4444',
           secondary_color: gymData.secondary_color || '#dc2626',
           logo: null,
-          favicon: null,
         });
         if (gymData.logo) setLogoPreview(`http://localhost:8000/storage/${gymData.logo}`);
-        if (gymData.favicon) setFaviconPreview(`http://localhost:8000/storage/${gymData.favicon}`);
       }
 
       if (membershipData) {
@@ -98,10 +94,6 @@ export const SystemSettingsPage = () => {
         const reader = new FileReader();
         reader.onload = () => setLogoPreview(reader.result as string);
         reader.readAsDataURL(file);
-      } else if (name === 'favicon' && file) {
-        const reader = new FileReader();
-        reader.onload = () => setFaviconPreview(reader.result as string);
-        reader.readAsDataURL(file);
       }
     } else {
       setGymForm((prev) => ({ ...prev, [name]: value }));
@@ -115,7 +107,7 @@ export const SystemSettingsPage = () => {
       const formData = new FormData();
       Object.entries(gymForm).forEach(([key, value]) => {
         if (value !== null && value !== undefined && value !== '') {
-          if (key === 'logo' || key === 'favicon') {
+          if (key === 'logo') {
             if (value instanceof File) formData.append(key, value);
           } else {
             formData.append(key, String(value));
@@ -329,49 +321,6 @@ export const SystemSettingsPage = () => {
               </div>
               <p className="text-xs text-gray-500 mt-1">11 digits starting with 9</p>
             </div>
-            {/* Color pickers – commented out as requested */}
-            {/*
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300">Primary Color</label>
-                <div className="flex items-center gap-3 mt-1">
-                  <input
-                    type="color"
-                    name="primary_color"
-                    value={gymForm.primary_color}
-                    onChange={handleGymChange}
-                    className="h-10 w-10 rounded border border-gray-600 cursor-pointer bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={gymForm.primary_color}
-                    onChange={handleGymChange}
-                    name="primary_color"
-                    className="flex-1 bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300">Secondary Color</label>
-                <div className="flex items-center gap-3 mt-1">
-                  <input
-                    type="color"
-                    name="secondary_color"
-                    value={gymForm.secondary_color}
-                    onChange={handleGymChange}
-                    className="h-10 w-10 rounded border border-gray-600 cursor-pointer bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={gymForm.secondary_color}
-                    onChange={handleGymChange}
-                    name="secondary_color"
-                    className="flex-1 bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-                  />
-                </div>
-              </div>
-            </div>
-            */}
             <div>
               <label className="block text-sm font-medium text-gray-300">Logo</label>
               <input
@@ -385,22 +334,6 @@ export const SystemSettingsPage = () => {
                 <div className="mt-2 flex items-center gap-3">
                   <img src={logoPreview} alt="Logo preview" className="h-16 w-16 object-contain rounded border border-gray-600" />
                   <span className="text-gray-400 text-sm">Current logo</span>
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300">Favicon</label>
-              <input
-                type="file"
-                name="favicon"
-                accept="image/*"
-                onChange={handleGymChange}
-                className="mt-1 w-full text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-red-600 file:text-white hover:file:bg-red-700 cursor-pointer transition"
-              />
-              {faviconPreview && (
-                <div className="mt-2 flex items-center gap-3">
-                  <img src={faviconPreview} alt="Favicon preview" className="h-12 w-12 object-contain rounded border border-gray-600" />
-                  <span className="text-gray-400 text-sm">Current favicon</span>
                 </div>
               )}
             </div>
@@ -517,7 +450,7 @@ export const SystemSettingsPage = () => {
               </div>
             )}
 
-            {/* Contract list – polished cards with hover effects */}
+            {/* Contract list */}
             <div className="grid grid-cols-1 gap-3">
               {contracts.map((item) => (
                 <div
@@ -569,7 +502,7 @@ export const SystemSettingsPage = () => {
                       </div>
                     </div>
                   ) : (
-                    // View mode – table‑like row
+                    // View mode
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex-1 min-w-[180px]">
                         <h4 className="text-white font-semibold text-lg">{item.title}</h4>

@@ -28,14 +28,7 @@ class SystemSettingRequest extends FormRequest
             'location'    => 'nullable|string',
             'email'       => 'nullable|email',
             'contact'     => 'nullable|string|max:20',
-            'social_links'=> 'nullable|array',
-            'features'    => 'nullable|array',
-            'pricing'     => 'nullable|array',
-            'primary_color'   => 'nullable|string',
-            'secondary_color' => 'nullable|string',
-            'logo'    => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'favicon' => 'nullable|image|mimes:ico,png|max:512',
-            'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'logo'    => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048'   
         ];
     }
 }

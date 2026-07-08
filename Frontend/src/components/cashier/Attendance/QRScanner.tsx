@@ -91,24 +91,6 @@ export const QRScanner = ({ onScan, onClose, isOpen, loading }: QRScannerProps) 
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!scannerRef.current) {
-      scannerRef.current = new Html5Qrcode(containerId);
-    }
-    setProcessing(true);
-    scannerRef.current
-      .scanFile(file, true)
-      .then((decodedText: string) => {
-        onScan(decodedText);
-      })
-      .catch((_err: any) => {
-        setError('No QR code found in the image.');
-        setProcessing(false);
-      });
-  };
-
   // Clean up on unmount
   useEffect(() => {
     return () => {

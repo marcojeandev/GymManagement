@@ -1,4 +1,4 @@
-import { X, User, Mail, Phone, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { X,  Mail, Phone, CheckCircle, XCircle } from 'lucide-react';
 
 interface MemberScanResultModalProps {
   isOpen: boolean;

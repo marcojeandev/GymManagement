@@ -2,7 +2,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { Setup } from './pages/Setup';
 import { Login } from './pages/Login';
 import { DashboardRouter } from './pages/DashboardRouter';
@@ -66,7 +66,12 @@ function ProtectedSystemRoute({ element }: { element: React.ReactElement }) {
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <AuthProvider>
         <Routes>
           <Route path="/setup" element={<Setup />} />

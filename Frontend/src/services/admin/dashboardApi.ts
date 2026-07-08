@@ -1,28 +1,23 @@
-import api from '.././api';
-import type { DashboardData, DashboardTrend } from '../../types/Dashboard';
+import api from '../../services/api';
 
 export const dashboardApi = {
-  /**
-   * Get main dashboard statistics (overview, members, sales, attendance, etc.)
-   */
-  async getDashboard(): Promise<DashboardData> {
+  async getDashboard() {
     const response = await api.get('/admin/dashboard');
-    return response.data.data;
+    console.log('📡 Dashboard API Response:', response.data);
+    
+    if (response.data && response.data.status === 1) {
+      return response.data.data;
+    }
+    return response.data;
   },
 
-  /**
-   * Get sales trend data for the last N days (default 7)
-   */
-  async getSalesTrend(days: number = 7): Promise<DashboardTrend> {
-    const response = await api.get(`/admin/reports/sales-trend?days=${days}`);
-    return response.data.data;
-  },
-
-  /**
-   * Get attendance trend for the last N days (default 7)
-   */
-  async getAttendanceTrend(days: number = 7): Promise<DashboardTrend> {
-    const response = await api.get(`/admin/reports/attendance-trend?days=${days}`);
-    return response.data.data;
+  async getSalesTrend(days: number = 7) {
+    const response = await api.get(`/admin/sales-trend?days=${days}`);
+    console.log('📡 Sales Trend API Response:', response.data);
+    
+    if (response.data && response.data.status === 1) {
+      return response.data.data;
+    }
+    return response.data;
   },
 };

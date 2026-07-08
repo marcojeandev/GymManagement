@@ -11,6 +11,7 @@ use App\Http\Requests\Admin\MembershipPriceRequest;
 use App\Http\Requests\Admin\ContractPriceRequest;
 use App\Http\Requests\Admin\SystemSettingRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -92,7 +93,14 @@ class SettingsController extends Controller
             $validated = $request->validated();
             $this->authorize('update', $gymSetting);
 
-            $gymSetting->update($validated); // FIXED: removed GymSetting->
+            if($request->hasFile('logo')){
+                if($gymSetting->logo && Storage::disk('public')->exists($gymSetting->logo)){
+                    Storage::disk('public')->delete($gymSetting->logo);
+                }
+                $validated["logo"] = $request->file('logo')->store('logos', 'public');
+            }
+
+            $gymSetting->update($validated);
 
             return response()->json([
                 'status' => 1,

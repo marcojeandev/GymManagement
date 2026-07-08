@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CashierLayout } from '../../layouts/CashierLayout';
 import { productApi } from '../../services/cashier/productApi';
-import type { Product, ProductFilters } from '../../types/Product';
+import type { Product } from '../../types/Product';
 import { CreateProductModal } from '../../components/cashier/Product/CreateProductModal';
 import { UpdateProductModal } from '../../components/cashier/Product/UpdateProductModal';
 import { ViewProductModal } from '../../components/cashier/Product/ViewProductModal';
