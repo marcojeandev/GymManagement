@@ -11,7 +11,7 @@ import { ViewAttendanceModal } from '../../components/cashier/Attendance/ViewAtt
 import { QRScanner } from '../../components/cashier/Attendance/QRScanner';
 import { MemberScanResultModal } from '../../components/cashier/Attendance/MemberScanResultModal';
 import toast from 'react-hot-toast';
-import { Plus, Search, Eye, Pencil, Trash2, QrCode, Clock } from 'lucide-react';
+import { Plus, Search, Eye, QrCode, Clock } from 'lucide-react';
 
 export const AttendancePage = () => {
   const [attendances, setAttendances] = useState<Attendance[]>([]);

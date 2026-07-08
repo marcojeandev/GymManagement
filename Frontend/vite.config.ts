@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['MJ.ico', 'favicon.ico'],
+      includeAssets: ['MJ.png', 'favicon.ico'],
       manifest: {
         name: 'Gym Management System',
         short_name: 'GymApp',
@@ -18,15 +18,15 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/MJ.ico',
+            src: '/MJ.png',
             sizes: '192x192',
-            type: 'image/x-icon',
+            type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/MJ.ico',
+            src: '/MJ.png',
             sizes: '512x512',
-            type: 'image/x-icon',
+            type: 'image/png',
             purpose: 'any maskable'
           }
         ]
@@ -44,24 +44,9 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 365
               }
             }
-          },
-          {
-            urlPattern: /^https:\/\/localhost:8000\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
-              }
-            }
           }
-        ],
-        // Skip waiting to ensure new version takes over immediately
-        skipWaiting: true,
-        clientsClaim: true
+        ]
       },
-      // Workaround for development
       devOptions: {
         enabled: true,
         type: 'module'
@@ -70,9 +55,5 @@ export default defineConfig({
   ],
   server: {
     port: 5173
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: false
   }
 });

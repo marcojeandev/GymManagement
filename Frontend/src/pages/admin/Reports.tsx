@@ -441,7 +441,7 @@ export const ReportsPage = () => {
                       dataKey="total"
                       nameKey="payment_type"
                     >
-                      {paymentData.map((entry: any, index: number) => (
+                      {paymentData.map((index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>

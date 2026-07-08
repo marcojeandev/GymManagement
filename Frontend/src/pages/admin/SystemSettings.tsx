@@ -13,7 +13,7 @@ export const SystemSettingsPage = () => {
   const [saving, setSaving] = useState(false);
 
   // ---------- Gym ----------
-  const [gym, setGym] = useState<GymSetting | null>(null);
+  const [, setGym] = useState<GymSetting | null>(null);
   const [gymForm, setGymForm] = useState({
     gym_name: '',
     description: '',
