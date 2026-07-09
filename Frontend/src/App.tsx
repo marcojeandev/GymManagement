@@ -1,12 +1,11 @@
-﻿// App.tsx
-
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { Setup } from './pages/Setup';
 import { Login } from './pages/Login';
 import { DashboardRouter } from './pages/DashboardRouter';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { RoleProtectedRoute } from './components/RoleProtectedRoute';
 import { useEffect, useState } from 'react';
 import { checkSystemStatus } from './services/api';
 
@@ -77,29 +76,166 @@ function App() {
           <Route path="/setup" element={<Setup />} />
           <Route path="/login" element={<Login />} />
 
-          {/* Admin Routes */}
-          <Route path="/dashboard" element={<ProtectedSystemRoute element={<DashboardRouter />} />} />
-          <Route path="/dashboard/members" element={<ProtectedSystemRoute element={<AdminMembersPage />} />} />
-          <Route path="/dashboard/system-settings" element={<ProtectedSystemRoute element={<SystemSettingsPage />} />} />
-          <Route path="/dashboard/contracts" element={<ProtectedSystemRoute element={<AdminContractsPage />} />} />
-          <Route path="/dashboard/products" element={<ProtectedSystemRoute element={<AdminProductsPage />} />} />
-          <Route path="/dashboard/sales" element={<ProtectedSystemRoute element={<AdminSalesPage />} />} />
-          <Route path="/dashboard/walk-in" element={<ProtectedSystemRoute element={<AdminWalkinsPage />} />} />
-          <Route path="/dashboard/walk-in-attendance" element={<ProtectedSystemRoute element={<AdminWalkinAttendancePage />} />} />
-          <Route path="/dashboard/attendance" element={<ProtectedSystemRoute element={<AdminAttendancePage />} />} />
-          <Route path="/dashboard/account-management" element={<ProtectedSystemRoute element={<AccountManagementPage />} />} />
-          <Route path="/dashboard/reports" element={<ProtectedSystemRoute element={<ReportsPage />} />} />
+          {/* ===== ADMIN ROUTES ===== */}
+          {/* Admin Dashboard */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<DashboardRouter />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          
+          {/* Admin Management Pages */}
+          <Route 
+            path="/dashboard/members" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<AdminMembersPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/system-settings" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<SystemSettingsPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/contracts" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<AdminContractsPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/products" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<AdminProductsPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/sales" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<AdminSalesPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/walk-in" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<AdminWalkinsPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/walk-in-attendance" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<AdminWalkinAttendancePage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/attendance" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<AdminAttendancePage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/account-management" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<AccountManagementPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard/reports" 
+            element={
+              <RoleProtectedRoute allowedRoles={['admin']}>
+                <ProtectedSystemRoute element={<ReportsPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
 
-          {/* Cashier Routes */}
-          <Route path="/cashier/dashboard" element={<ProtectedSystemRoute element={<CashierDashboard />} />} />
-          <Route path="/cashier/members" element={<ProtectedSystemRoute element={<CashierMembersPage />} />} />
-          <Route path="/cashier/contracts" element={<ProtectedSystemRoute element={<CashierContractsPage />} />} />
-          <Route path="/cashier/products" element={<ProtectedSystemRoute element={<CashierProductsPage />} />} />
-          <Route path="/cashier/sales" element={<ProtectedSystemRoute element={<CashierSalesPage />} />} />
-          <Route path="/cashier/walk-in" element={<ProtectedSystemRoute element={<CashierWalkinsPage />} />} />
-          <Route path="/cashier/walk-in-attendance" element={<ProtectedSystemRoute element={<CashierWalkinAttendancePage />} />} />
-          <Route path="/cashier/attendance" element={<ProtectedSystemRoute element={<CashierAttendancePage />} />} />
+          {/* ===== CASHIER ROUTES ===== */}
+          <Route 
+            path="/cashier/dashboard" 
+            element={
+              <RoleProtectedRoute allowedRoles={['cashier', 'admin']}>
+                <ProtectedSystemRoute element={<CashierDashboard />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cashier/members" 
+            element={
+              <RoleProtectedRoute allowedRoles={['cashier', 'admin']}>
+                <ProtectedSystemRoute element={<CashierMembersPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cashier/contracts" 
+            element={
+              <RoleProtectedRoute allowedRoles={['cashier', 'admin']}>
+                <ProtectedSystemRoute element={<CashierContractsPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cashier/products" 
+            element={
+              <RoleProtectedRoute allowedRoles={['cashier', 'admin']}>
+                <ProtectedSystemRoute element={<CashierProductsPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cashier/sales" 
+            element={
+              <RoleProtectedRoute allowedRoles={['cashier', 'admin']}>
+                <ProtectedSystemRoute element={<CashierSalesPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cashier/walk-in" 
+            element={
+              <RoleProtectedRoute allowedRoles={['cashier', 'admin']}>
+                <ProtectedSystemRoute element={<CashierWalkinsPage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cashier/walk-in-attendance" 
+            element={
+              <RoleProtectedRoute allowedRoles={['cashier', 'admin']}>
+                <ProtectedSystemRoute element={<CashierWalkinAttendancePage />} />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cashier/attendance" 
+            element={
+              <RoleProtectedRoute allowedRoles={['cashier', 'admin']}>
+                <ProtectedSystemRoute element={<CashierAttendancePage />} />
+              </RoleProtectedRoute>
+            } 
+          />
 
+          {/* ===== FALLBACK ===== */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
         <Toaster

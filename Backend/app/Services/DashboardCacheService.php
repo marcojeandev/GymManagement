@@ -13,7 +13,7 @@ use Carbon\Carbon;
 
 class DashboardCacheService
 {
-    protected $ttl = 300; // 5 minutes
+    protected $ttl = 0; // ✅ Disable cache for debugging
 
     public function getOverview()
     {
@@ -21,12 +21,10 @@ class DashboardCacheService
             $today = Carbon::today();
             $thisMonth = Carbon::now()->startOfMonth();
 
-            // Calculate sales revenue
             $salesToday = (float) Sale::whereDate('created_at', $today)->sum('payment_amount');
             $salesThisMonth = (float) Sale::where('created_at', '>=', $thisMonth)->sum('payment_amount');
             $salesLastWeek = (float) Sale::where('created_at', '>=', Carbon::now()->subDays(7))->sum('payment_amount');
 
-            // Calculate contract revenue
             $contractToday = (float) Contract::whereDate('created_at', $today)
                 ->where('payment_status', 'paid')
                 ->sum('payment_amount');
@@ -37,7 +35,6 @@ class DashboardCacheService
                 ->where('payment_status', 'paid')
                 ->sum('payment_amount');
 
-            // Calculate membership fee revenue
             $membershipToday = (float) MembershipFee::whereDate('created_at', $today)
                 ->where('payment_status', 'paid')
                 ->sum('payment_amount');
@@ -109,63 +106,68 @@ class DashboardCacheService
     }
 
     public function getSalesTrend($days = 7)
-    {
-        $cacheKey = "sales_trend_{$days}";
-        return Cache::remember($cacheKey, $this->ttl, function () use ($days) {
-            $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+{
+    $cacheKey = "sales_trend_{$days}";
+    Cache::forget($cacheKey);
+    
+    return Cache::remember($cacheKey, $this->ttl, function () use ($days) {
+        $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+        
+        // ✅ Get sales data properly
+        $salesData = Sale::where('created_at', '>=', $startDate)
+            ->selectRaw('DATE(created_at) as date, SUM(payment_amount) as total')
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get()
+            ->keyBy('date');
+
+        // Get contracts
+        $contractData = Contract::where('created_at', '>=', $startDate)
+            ->where('payment_status', 'paid')
+            ->selectRaw('DATE(created_at) as date, SUM(payment_amount) as total')
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get()
+            ->keyBy('date');
+
+        // Get membership fees
+        $membershipData = MembershipFee::where('created_at', '>=', $startDate)
+            ->where('payment_status', 'paid')
+            ->selectRaw('DATE(created_at) as date, SUM(payment_amount) as total')
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get()
+            ->keyBy('date');
+
+        $labels = [];
+        $salesValues = [];
+        $contractValues = [];
+        $membershipValues = [];
+        $totalValues = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i)->toDateString();
+            $labels[] = Carbon::parse($date)->format('M d');
             
-            $salesData = Sale::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
-                ->where('created_at', '>=', $startDate)
-                ->groupBy('date')
-                ->orderBy('date', 'asc')
-                ->get()
-                ->keyBy('date');
+            $sales = (float) ($salesData[$date]->total ?? 0);
+            $contracts = (float) ($contractData[$date]->total ?? 0);
+            $memberships = (float) ($membershipData[$date]->total ?? 0);
+            
+            $salesValues[] = $sales;
+            $contractValues[] = $contracts;
+            $membershipValues[] = $memberships;
+            $totalValues[] = $sales + $contracts + $memberships;
+        }
 
-            $contractData = Contract::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
-                ->where('created_at', '>=', $startDate)
-                ->where('payment_status', 'paid')
-                ->groupBy('date')
-                ->orderBy('date', 'asc')
-                ->get()
-                ->keyBy('date');
-
-            $membershipData = MembershipFee::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
-                ->where('created_at', '>=', $startDate)
-                ->where('payment_status', 'paid')
-                ->groupBy('date')
-                ->orderBy('date', 'asc')
-                ->get()
-                ->keyBy('date');
-
-            $labels = [];
-            $salesValues = [];
-            $contractValues = [];
-            $membershipValues = [];
-            $totalValues = [];
-
-            for ($i = $days - 1; $i >= 0; $i--) {
-                $date = Carbon::now()->subDays($i)->toDateString();
-                $labels[] = Carbon::parse($date)->format('M d');
-                
-                $sales = (float) ($salesData[$date]->total ?? 0);
-                $contracts = (float) ($contractData[$date]->total ?? 0);
-                $memberships = (float) ($membershipData[$date]->total ?? 0);
-                
-                $salesValues[] = $sales;
-                $contractValues[] = $contracts;
-                $membershipValues[] = $memberships;
-                $totalValues[] = $sales + $contracts + $memberships;
-            }
-
-            return [
-                'labels' => $labels,
-                'values' => $totalValues,
-                'breakdown' => [
-                    'sales' => $salesValues,
-                    'contracts' => $contractValues,
-                    'membership_fees' => $membershipValues,
-                ],
-            ];
-        });
-    }
+        return [
+            'labels' => $labels,
+            'values' => $totalValues,
+            'breakdown' => [
+                'sales' => $salesValues,
+                'contracts' => $contractValues,
+                'membership_fees' => $membershipValues,
+            ],
+        ];
+    });
+}
 }

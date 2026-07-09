@@ -1,3 +1,5 @@
+// types/Dashboard.ts
+
 export interface DashboardData {
   members: {
     total: number;
@@ -46,14 +48,4 @@ export interface DashboardData {
     or_number: string;
     created_at: string;
   }>;
-}
-
-export interface DashboardTrend {
-  labels: string[];
-  values: number[];
-  breakdown?: {
-    sales: number[];
-    contracts: number[];
-    membership_fees: number[];
-  };
 }

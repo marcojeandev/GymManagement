@@ -39,7 +39,7 @@ export const MemberSearchSelect = ({
   const fetchMembers = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/admin/members?search=${search}&per_page=20`);
+      const response = await api.get(`/cashier/members?search=${search}&per_page=20`);
       setMembers(response.data.data.data.map((m: any) => ({
         id: m.id,
         fullName: `${m.firstname} ${m.lastname}${m.suffix ? ' ' + m.suffix : ''}`,

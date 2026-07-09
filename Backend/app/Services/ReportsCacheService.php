@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
@@ -9,18 +8,14 @@ use App\Models\Sale;
 use App\Models\Attendance;
 use App\Models\WalkinAttendance;
 use App\Models\WalkinInfo;
-use App\Models\Product;
 use App\Models\MembershipFee;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ReportsCacheService
 {
-    protected $ttl = 600; // 10 minutes
+    protected $ttl = 60; // 1 minute for testing
 
-    /**
-     * Get overview statistics with caching
-     */
     public function getOverview()
     {
         return Cache::remember('reports_overview', $this->ttl, function () {
@@ -28,7 +23,6 @@ class ReportsCacheService
             $thisMonth = Carbon::now()->startOfMonth();
             $thisYear = Carbon::now()->startOfYear();
 
-            // Calculate all revenue in one query each
             $salesRevenue = Sale::where('created_at', '>=', $thisMonth)->sum('payment_amount');
             $contractRevenue = Contract::where('created_at', '>=', $thisMonth)
                 ->where('payment_status', 'paid')
@@ -45,37 +39,14 @@ class ReportsCacheService
                 ->where('payment_status', 'paid')
                 ->sum('payment_amount');
 
-            // Get counts efficiently
-            $memberCounts = Member::selectRaw("
-                COUNT(*) as total,
-                SUM(CASE WHEN membership_status = 'active' THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN membership_status = 'expired' THEN 1 ELSE 0 END) as expired
-            ")->first();
-
-            $activeContracts = Contract::where('contract_to', '>=', $today)->count();
-
-            $attendanceCounts = Attendance::selectRaw("
-                SUM(CASE WHEN DATE(time_in) = ? THEN 1 ELSE 0 END) as today,
-                SUM(CASE WHEN time_in >= ? THEN 1 ELSE 0 END) as this_month
-            ", [$today, $thisMonth])->first();
-
-            $walkinCounts = WalkinInfo::selectRaw("
-                COUNT(*) as total,
-                SUM(CASE WHEN DATE(created_at) = ? THEN 1 ELSE 0 END) as today,
-                SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as this_month
-            ", [$today, $thisMonth])->first();
-
-            $walkinAttendanceToday = WalkinAttendance::whereDate('time_in', $today)->count();
-            $walkinAttendanceMonth = WalkinAttendance::where('time_in', '>=', $thisMonth)->count();
-
             return [
                 'members' => [
-                    'total' => (int) ($memberCounts->total ?? 0),
-                    'active' => (int) ($memberCounts->active ?? 0),
-                    'expired' => (int) ($memberCounts->expired ?? 0),
+                    'total' => Member::count(),
+                    'active' => Member::where('membership_status', 'active')->count(),
+                    'expired' => Member::where('membership_status', 'expired')->count(),
                 ],
                 'contracts' => [
-                    'active' => (int) $activeContracts,
+                    'active' => Contract::where('contract_to', '>=', $today)->count(),
                 ],
                 'sales' => [
                     'today' => (float) ($salesToday + $contractToday + $membershipToday),
@@ -88,21 +59,18 @@ class ReportsCacheService
                     ],
                 ],
                 'attendance' => [
-                    'today' => (int) ($attendanceCounts->today ?? 0),
-                    'this_month' => (int) ($attendanceCounts->this_month ?? 0),
+                    'today' => Attendance::whereDate('time_in', $today)->count(),
+                    'this_month' => Attendance::where('time_in', '>=', $thisMonth)->count(),
                 ],
                 'walkins' => [
-                    'total' => (int) ($walkinCounts->total ?? 0),
-                    'today' => (int) $walkinAttendanceToday,
-                    'this_month' => (int) $walkinAttendanceMonth,
+                    'total' => WalkinInfo::count(),
+                    'today' => WalkinAttendance::whereDate('time_in', $today)->count(),
+                    'this_month' => WalkinAttendance::where('time_in', '>=', $thisMonth)->count(),
                 ],
             ];
         });
     }
 
-    /**
-     * Get member growth with caching
-     */
     public function getMemberGrowth($months = 12)
     {
         $cacheKey = "reports_member_growth_{$months}";
@@ -122,30 +90,44 @@ class ReportsCacheService
 
             $labels = [];
             $values = [];
-            foreach ($data as $item) {
-                $date = Carbon::createFromDate($item->year, $item->month, 1);
-                $labels[] = $date->format('M Y');
-                $values[] = (int) $item->count;
+            
+            // ✅ Fill all months with zero if no data
+            for ($i = $months - 1; $i >= 0; $i--) {
+                $date = Carbon::now()->subMonths($i);
+                $monthKey = $date->format('Y-m');
+                $label = $date->format('M Y');
+                
+                $found = false;
+                foreach ($data as $item) {
+                    $itemDate = Carbon::createFromDate($item->year, $item->month, 1);
+                    if ($itemDate->format('Y-m') === $monthKey) {
+                        $labels[] = $label;
+                        $values[] = (int) $item->count;
+                        $found = true;
+                        break;
+                    }
+                }
+                
+                if (!$found) {
+                    $labels[] = $label;
+                    $values[] = 0;
+                }
             }
 
             return ['labels' => $labels, 'values' => $values];
         });
     }
 
-    /**
-     * Get sales trend with caching
-     */
     public function getSalesTrend($days = 30)
     {
         $cacheKey = "reports_sales_trend_{$days}";
         return Cache::remember($cacheKey, $this->ttl, function () use ($days) {
             $startDate = Carbon::now()->subDays($days)->startOfDay();
 
-            // Use UNION to get all data in one query
+            // Get combined sales from all sources
             $salesData = Sale::select(
                 DB::raw('DATE(created_at) as date'),
-                DB::raw('COALESCE(SUM(payment_amount), 0) as total'),
-                DB::raw("'sale' as type")
+                DB::raw('COALESCE(SUM(payment_amount), 0) as total')
             )
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')
@@ -154,8 +136,7 @@ class ReportsCacheService
 
             $contractData = Contract::select(
                 DB::raw('DATE(created_at) as date'),
-                DB::raw('COALESCE(SUM(payment_amount), 0) as total'),
-                DB::raw("'contract' as type")
+                DB::raw('COALESCE(SUM(payment_amount), 0) as total')
             )
             ->whereDate('created_at', '>=', $startDate)
             ->where('payment_status', 'paid')
@@ -165,8 +146,7 @@ class ReportsCacheService
 
             $membershipData = MembershipFee::select(
                 DB::raw('DATE(created_at) as date'),
-                DB::raw('COALESCE(SUM(payment_amount), 0) as total'),
-                DB::raw("'membership' as type")
+                DB::raw('COALESCE(SUM(payment_amount), 0) as total')
             )
             ->whereDate('created_at', '>=', $startDate)
             ->where('payment_status', 'paid')
@@ -175,10 +155,7 @@ class ReportsCacheService
             ->keyBy('date');
 
             $labels = [];
-            $salesValues = [];
-            $contractValues = [];
-            $membershipValues = [];
-            $totalValues = [];
+            $values = [];
 
             for ($i = $days - 1; $i >= 0; $i--) {
                 $date = Carbon::now()->subDays($i)->toDateString();
@@ -188,30 +165,21 @@ class ReportsCacheService
                 $contracts = (float) ($contractData[$date]->total ?? 0);
                 $memberships = (float) ($membershipData[$date]->total ?? 0);
                 
-                $salesValues[] = $sales;
-                $contractValues[] = $contracts;
-                $membershipValues[] = $memberships;
-                $totalValues[] = $sales + $contracts + $memberships;
+                $values[] = $sales + $contracts + $memberships;
             }
 
             return [
                 'labels' => $labels,
-                'sales' => $salesValues,
-                'contracts' => $contractValues,
-                'membership_fees' => $membershipValues,
-                'total' => $totalValues,
+                'values' => $values,
             ];
         });
     }
 
-    /**
-     * Get top products with caching
-     */
     public function getTopProducts($limit = 5)
     {
         $cacheKey = "reports_top_products_{$limit}";
         return Cache::remember($cacheKey, $this->ttl, function () use ($limit) {
-            return DB::table('product_sold')
+            $products = DB::table('product_sold')
                 ->join('products', 'product_sold.product_id', '=', 'products.id')
                 ->select(
                     'products.name',
@@ -221,20 +189,19 @@ class ReportsCacheService
                 ->groupBy('product_sold.product_id', 'products.name')
                 ->orderBy('total_quantity', 'desc')
                 ->limit($limit)
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'name' => $item->name,
-                        'total_quantity' => (int) $item->total_quantity,
-                        'total_revenue' => (float) $item->total_revenue,
-                    ];
-                });
+                ->get();
+
+            // ✅ Return as array of objects with proper keys
+            return $products->map(function ($item) {
+                return [
+                    'name' => $item->name,
+                    'total_quantity' => (int) $item->total_quantity,
+                    'total_revenue' => (float) $item->total_revenue,
+                ];
+            })->toArray();
         });
     }
 
-    /**
-     * Get attendance trend with caching
-     */
     public function getAttendanceTrend($days = 30)
     {
         $cacheKey = "reports_attendance_trend_{$days}";
@@ -263,60 +230,27 @@ class ReportsCacheService
         });
     }
 
-    /**
-     * Get sales by payment type with caching
-     */
     public function getSalesByPaymentType()
     {
         return Cache::remember('reports_sales_by_payment', $this->ttl, function () {
-            // Get sales payment types
             $sales = Sale::select(
                 'payment_type',
                 DB::raw('COUNT(*) as count'),
                 DB::raw('COALESCE(SUM(payment_amount), 0) as total')
             )
             ->groupBy('payment_type')
-            ->get()
-            ->keyBy('payment_type');
+            ->get();
 
-            // Get contract payment types
-            $contracts = Contract::select(
-                'payment_type',
-                DB::raw('COUNT(*) as count'),
-                DB::raw('COALESCE(SUM(payment_amount), 0) as total')
-            )
-            ->where('payment_status', 'paid')
-            ->groupBy('payment_type')
-            ->get()
-            ->keyBy('payment_type');
-
-            // Get membership fee payment types
-            $memberships = MembershipFee::select(
-                'payment_type',
-                DB::raw('COUNT(*) as count'),
-                DB::raw('COALESCE(SUM(payment_amount), 0) as total')
-            )
-            ->where('payment_status', 'paid')
-            ->groupBy('payment_type')
-            ->get()
-            ->keyBy('payment_type');
-
-            $default = [
-                ['payment_type' => 'cash', 'count' => 0, 'total' => 0],
-                ['payment_type' => 'gcash', 'count' => 0, 'total' => 0],
-            ];
-
+            // ✅ Ensure both cash and gcash are always present
             $result = [];
-            foreach ($default as $row) {
-                $type = $row['payment_type'];
-                $saleData = $sales[$type] ?? null;
-                $contractData = $contracts[$type] ?? null;
-                $membershipData = $memberships[$type] ?? null;
-
+            $paymentTypes = ['cash', 'gcash'];
+            
+            foreach ($paymentTypes as $type) {
+                $found = $sales->firstWhere('payment_type', $type);
                 $result[] = [
                     'payment_type' => $type,
-                    'count' => ($saleData->count ?? 0) + ($contractData->count ?? 0) + ($membershipData->count ?? 0),
-                    'total' => (float) (($saleData->total ?? 0) + ($contractData->total ?? 0) + ($membershipData->total ?? 0)),
+                    'count' => $found ? (int) $found->count : 0,
+                    'total' => $found ? (float) $found->total : 0,
                 ];
             }
 
@@ -324,31 +258,35 @@ class ReportsCacheService
         });
     }
 
-    /**
-     * Get membership distribution with caching
-     */
     public function getMembershipDistribution()
     {
         return Cache::remember('reports_membership_distribution', $this->ttl, function () {
-            return Member::select('membership_status', DB::raw('COUNT(*) as count'))
+            $data = Member::select('membership_status', DB::raw('COUNT(*) as count'))
                 ->groupBy('membership_status')
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'membership_status' => $item->membership_status,
-                        'count' => (int) $item->count,
-                    ];
-                });
+                ->get();
+
+            // ✅ Ensure all statuses are present
+            $statuses = ['active', 'expired', 'pending'];
+            $result = [];
+            
+            foreach ($statuses as $status) {
+                $found = $data->firstWhere('membership_status', $status);
+                $result[] = [
+                    'membership_status' => $status,
+                    'count' => $found ? (int) $found->count : 0,
+                ];
+            }
+
+            return $result;
         });
     }
 
-    /**
-     * Get contract distribution with caching
-     */
     public function getContractDistribution()
     {
         return Cache::remember('reports_contract_distribution', $this->ttl, function () {
             $today = Carbon::today();
+            
+            // ✅ Get all contracts with status
             $active = Contract::where('contract_to', '>=', $today)->count();
             $expired = Contract::where('contract_to', '<', $today)->count();
 
@@ -359,9 +297,6 @@ class ReportsCacheService
         });
     }
 
-    /**
-     * Get attendance distribution with caching
-     */
     public function getAttendanceDistribution($start, $end)
     {
         $cacheKey = "reports_attendance_distribution_{$start}_{$end}";
@@ -381,9 +316,6 @@ class ReportsCacheService
         });
     }
 
-    /**
-     * Get revenue breakdown with caching
-     */
     public function getRevenueBreakdown($start, $end)
     {
         $cacheKey = "reports_revenue_breakdown_{$start}_{$end}";
@@ -402,10 +334,8 @@ class ReportsCacheService
                 ->where('payment_status', 'paid')
                 ->sum('payment_amount');
 
-            $totalRevenue = $salesRevenue + $contractRevenue + $membershipRevenue;
-
             return [
-                'total_revenue' => (float) $totalRevenue,
+                'total_revenue' => (float) ($salesRevenue + $contractRevenue + $membershipRevenue),
                 'breakdown' => [
                     'sales' => (float) $salesRevenue,
                     'contracts' => (float) $contractRevenue,
@@ -416,9 +346,6 @@ class ReportsCacheService
         });
     }
 
-    /**
-     * Get all revenue sources combined with caching
-     */
     public function getAllRevenue($start, $end)
     {
         $cacheKey = "reports_all_revenue_{$start}_{$end}";
@@ -475,4 +402,5 @@ class ReportsCacheService
         
         return true;
     }
+
 }

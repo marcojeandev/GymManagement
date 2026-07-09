@@ -52,7 +52,7 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])
     ->name('admin.')
     ->group(function (){
         Route::get('dashboard', [DashboardController::class, 'index']);
-        Route::get('sales-trend', [DashboardController::class, 'salesTrend']); 
+        Route::get('sales-trend', [DashboardController::class, 'salesTrend']);
 
         // Users Management 
         Route::apiResource('users', UserController::class);

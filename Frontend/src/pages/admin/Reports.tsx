@@ -37,12 +37,12 @@ export const ReportsPage = () => {
   const [overview, setOverview] = useState<any>(null);
   const [memberGrowth, setMemberGrowth] = useState<any>(null);
   const [salesTrend, setSalesTrend] = useState<any>(null);
-  const [topProducts, setTopProducts] = useState<any>([]);
+  const [topProducts, setTopProducts] = useState<any[]>([]);
   const [attendanceTrend, setAttendanceTrend] = useState<any>(null);
-  const [salesByPayment, setSalesByPayment] = useState<any>([]);
-  const [membershipDist, setMembershipDist] = useState<any>([]);
-  const [contractDist, setContractDist] = useState<any>([]);
-  const [attendanceDist, setAttendanceDist] = useState<any>([]);
+  const [salesByPayment, setSalesByPayment] = useState<any[]>([]);
+  const [membershipDist, setMembershipDist] = useState<any[]>([]);
+  const [contractDist, setContractDist] = useState<any[]>([]);
+  const [attendanceDist, setAttendanceDist] = useState<any[]>([]);
   const [revenue, setRevenue] = useState<any>(null);
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
@@ -57,16 +57,16 @@ export const ReportsPage = () => {
     setLoading(true);
     try {
       const [
-        overviewData,
-        memberGrowthData,
-        salesTrendData,
-        topProductsData,
-        attendanceTrendData,
-        salesByPaymentData,
-        membershipDistData,
-        contractDistData,
-        attendanceDistData,
-        revenueData,
+        overviewRes,
+        memberGrowthRes,
+        salesTrendRes,
+        topProductsRes,
+        attendanceTrendRes,
+        salesByPaymentRes,
+        membershipDistRes,
+        contractDistRes,
+        attendanceDistRes,
+        revenueRes,
       ] = await Promise.all([
         reportsApi.getOverview(),
         reportsApi.getMemberGrowth(12),
@@ -80,25 +80,60 @@ export const ReportsPage = () => {
         reportsApi.getRevenue(dateRange.start, dateRange.end),
       ]);
 
-      // ✅ Ensure all data is properly extracted from API responses
-      setOverview(overviewData?.data || overviewData || null);
-      setMemberGrowth(memberGrowthData?.data || memberGrowthData || null);
-      setSalesTrend(salesTrendData?.data || salesTrendData || null);
-      setTopProducts(Array.isArray(topProductsData?.data) ? topProductsData.data : (Array.isArray(topProductsData) ? topProductsData : []));
-      setAttendanceTrend(attendanceTrendData?.data || attendanceTrendData || null);
-      setSalesByPayment(Array.isArray(salesByPaymentData?.data) ? salesByPaymentData.data : (Array.isArray(salesByPaymentData) ? salesByPaymentData : []));
+      // Log raw responses for debugging
+      console.log('=== RAW RESPONSES ===');
+      console.log('Overview:', overviewRes);
+      console.log('Sales Trend:', salesTrendRes);
+      console.log('Top Products:', topProductsRes);
+      console.log('Membership Dist:', membershipDistRes);
+      console.log('Contract Dist:', contractDistRes);
+
+      // Extract data - handle both { status: 1, data: {...} } and direct { data: {...} }
+      const extract = (res: any) => {
+        if (!res) return null;
+        // If response has status and data
+        if (res.status !== undefined && res.data !== undefined) {
+          return res.data;
+        }
+        // If response is already the data
+        if (res.data !== undefined) {
+          return res.data;
+        }
+        return res;
+      };
+
+      // Set all data
+      setOverview(extract(overviewRes));
+      setMemberGrowth(extract(memberGrowthRes));
       
-      // ✅ Ensure these are always arrays
-      const membershipData = membershipDistData?.data || membershipDistData || [];
+      // Sales Trend - extract and ensure it has labels/values
+      const salesData = extract(salesTrendRes);
+      console.log('Extracted Sales Trend:', salesData);
+      setSalesTrend(salesData);
+      
+      // Top Products - extract and ensure it's an array
+      const productsData = extract(topProductsRes);
+      console.log('Extracted Top Products:', productsData);
+      setTopProducts(Array.isArray(productsData) ? productsData : []);
+      
+      setAttendanceTrend(extract(attendanceTrendRes));
+      
+      const paymentData = extract(salesByPaymentRes);
+      setSalesByPayment(Array.isArray(paymentData) ? paymentData : []);
+      
+      const membershipData = extract(membershipDistRes);
+      console.log('Extracted Membership Data:', membershipData);
       setMembershipDist(Array.isArray(membershipData) ? membershipData : []);
       
-      const contractData = contractDistData?.data || contractDistData || [];
+      const contractData = extract(contractDistRes);
+      console.log('Extracted Contract Data:', contractData);
       setContractDist(Array.isArray(contractData) ? contractData : []);
       
-      const attendanceData = attendanceDistData?.data || attendanceDistData || [];
+      const attendanceData = extract(attendanceDistRes);
       setAttendanceDist(Array.isArray(attendanceData) ? attendanceData : []);
       
-      setRevenue(revenueData?.data || revenueData || null);
+      setRevenue(extract(revenueRes));
+
     } catch (error) {
       console.error('Reports fetch error:', error);
       toast.error('Failed to load reports');
@@ -128,13 +163,6 @@ export const ReportsPage = () => {
     csv += `Attendance (Today),${overview?.attendance?.today || 0}\n`;
     csv += `Total Walk-ins,${overview?.walkins?.total || 0}\n`;
     csv += `Walk-ins (Today),${overview?.walkins?.today || 0}\n\n`;
-
-    csv += 'MEMBER GROWTH (Monthly)\n';
-    csv += 'Month,New Members\n';
-    memberGrowth?.labels?.forEach((label: string, i: number) => {
-      csv += `${label},${memberGrowth?.values?.[i] || 0}\n`;
-    });
-    csv += '\n';
 
     csv += 'SALES TREND (Daily)\n';
     csv += 'Day,Sales (₱)\n';
@@ -236,8 +264,27 @@ export const ReportsPage = () => {
     );
   }
 
-  // Ensure payment data exists
-  const paymentData = salesByPayment && salesByPayment.length > 0 ? salesByPayment : [
+  // Prepare chart data
+  const salesTrendData = salesTrend?.labels?.map((label: string, i: number) => ({
+    day: label,
+    sales: salesTrend?.values?.[i] || 0,
+  })) || [];
+
+  const memberGrowthData = memberGrowth?.labels?.map((label: string, i: number) => ({
+    month: label,
+    members: memberGrowth?.values?.[i] || 0,
+  })) || [];
+
+  const attendanceTrendData = attendanceTrend?.labels?.map((label: string, i: number) => ({
+    day: label,
+    attendance: attendanceTrend?.values?.[i] || 0,
+  })) || [];
+
+ const hasSalesData = salesTrendData.length > 0 && salesTrendData.some((d: any) => d.sales > 0);
+  const hasProductData = topProducts.length > 0;
+  const hasAttendanceData = attendanceTrendData.length > 0;
+
+  const paymentData = salesByPayment.length > 0 ? salesByPayment : [
     { payment_type: 'cash', count: 0, total: 0 },
     { payment_type: 'gcash', count: 0, total: 0 },
   ];
@@ -245,7 +292,7 @@ export const ReportsPage = () => {
   return (
     <AdminLayout>
       <div className="max-w-7xl mx-auto">
-        {/* Header with Export Buttons */}
+        {/* Header */}
         <div className="flex items-center justify-between mb-8 flex-wrap gap-2">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent flex items-center gap-2">
             <TrendingUp className="w-7 h-7 text-red-500" />
@@ -285,7 +332,6 @@ export const ReportsPage = () => {
           </div>
         </div>
 
-        {/* Print Area */}
         <div id="print-area">
           {/* Overview Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -344,7 +390,7 @@ export const ReportsPage = () => {
             </div>
           </div>
 
-          {/* Charts Grid */}
+          {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Member Growth */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
@@ -352,18 +398,21 @@ export const ReportsPage = () => {
                 <UserPlus size={20} className="text-red-400" />
                 Member Growth
               </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={memberGrowth?.labels?.map((label: string, i: number) => ({
-                  month: label,
-                  members: memberGrowth?.values?.[i] || 0,
-                })) || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="month" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
-                  <Area type="monotone" dataKey="members" stroke="#ef4444" fill="#ef444480" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {memberGrowthData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={memberGrowthData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="month" stroke="#9ca3af" fontSize={10} />
+                    <YAxis stroke="#9ca3af" fontSize={10} />
+                    <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                    <Area type="monotone" dataKey="members" stroke="#ef4444" fill="#ef444480" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-gray-400">
+                  <p>No data available</p>
+                </div>
+              )}
             </div>
 
             {/* Sales Trend */}
@@ -372,81 +421,15 @@ export const ReportsPage = () => {
                 <DollarSign size={20} className="text-yellow-400" />
                 Sales Trend (Last 30 Days)
               </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={salesTrend?.labels?.map((label: string, i: number) => ({
-                  day: label,
-                  sales: salesTrend?.values?.[i] || 0,
-                })) || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="day" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
-                  <Bar dataKey="sales" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Top Products */}
-            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
-              <h3 className="text-lg font-semibold text-white mb-4">Top Selling Products</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart
-                  layout="vertical"
-                  data={topProducts || []}
-                  margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis type="number" stroke="#9ca3af" />
-                  <YAxis type="category" dataKey="name" stroke="#9ca3af" width={100} />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
-                  <Bar dataKey="total_quantity" fill="#f87171" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Attendance Trend */}
-            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Clock size={20} className="text-blue-400" />
-                Attendance Trend
-              </h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={attendanceTrend?.labels?.map((label: string, i: number) => ({
-                  day: label,
-                  attendance: attendanceTrend?.values?.[i] || 0,
-                })) || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="day" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
-                  <Line type="monotone" dataKey="attendance" stroke="#3b82f6" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Sales by Payment Type */}
-            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
-              <h3 className="text-lg font-semibold text-white mb-4">Sales by Payment Type</h3>
-              {paymentData.some((item: any) => item.total > 0 || item.count > 0) ? (
+              {hasSalesData ? (
                 <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={paymentData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="total"
-                      nameKey="payment_type"
-                    >
-                      {paymentData.map((index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
+                  <BarChart data={salesTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="day" stroke="#9ca3af" fontSize={10} />
+                    <YAxis stroke="#9ca3af" fontSize={10} />
                     <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
-                  </PieChart>
+                    <Bar dataKey="sales" fill="#ef4444" />
+                  </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-[250px] text-gray-400">
@@ -459,10 +442,104 @@ export const ReportsPage = () => {
               )}
             </div>
 
-            {/* Membership Distribution - FIXED */}
+            {/* Top Products */}
+            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <TrendingUp size={20} className="text-green-400" />
+                Top Selling Products
+              </h3>
+              {hasProductData ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart
+                    layout="vertical"
+                    data={topProducts}
+                    margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis type="number" stroke="#9ca3af" fontSize={10} />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      stroke="#9ca3af" 
+                      fontSize={10}
+                      width={80}
+                      tick={{ fill: '#9ca3af' }}
+                    />
+                    <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                    <Bar dataKey="total_quantity" fill="#f87171" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-gray-400">
+                  <div className="text-center">
+                    <FileText size={48} className="mx-auto text-gray-600 mb-2" />
+                    <p>No product data available</p>
+                    <p className="text-sm text-gray-500">Products will appear here once you have sales</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Attendance Trend */}
+            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Clock size={20} className="text-blue-400" />
+                Attendance Trend
+              </h3>
+              {hasAttendanceData ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={attendanceTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="day" stroke="#9ca3af" fontSize={10} />
+                    <YAxis stroke="#9ca3af" fontSize={10} />
+                    <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                    <Line type="monotone" dataKey="attendance" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-gray-400">
+                  <p>No attendance data available</p>
+                </div>
+              )}
+            </div>
+
+            {/* Sales by Payment Type */}
+            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
+              <h3 className="text-lg font-semibold text-white mb-4">Sales by Payment Type</h3>
+              {paymentData.some((item: any) => item.total > 0) ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={paymentData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      dataKey="total"
+                      nameKey="payment_type"
+                    >
+                      {paymentData.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-gray-400">
+                  <div className="text-center">
+                    <DollarSign size={48} className="mx-auto text-gray-600 mb-2" />
+                    <p>No sales data available</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Membership Distribution */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4">Membership Status</h3>
-              {membershipDist && Array.isArray(membershipDist) && membershipDist.length > 0 ? (
+              {membershipDist.length > 0 ? (
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
@@ -472,7 +549,6 @@ export const ReportsPage = () => {
                       labelLine={false}
                       label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                       outerRadius={80}
-                      fill="#8884d8"
                       dataKey="count"
                       nameKey="membership_status"
                     >
@@ -506,10 +582,10 @@ export const ReportsPage = () => {
               <p className="text-gray-400 text-sm">Attendance (Member vs Walk-in)</p>
               <div className="flex gap-4 mt-1">
                 <span className="text-blue-400">
-                  Members: {Array.isArray(attendanceDist) ? attendanceDist.find((d: any) => d.type === 'Members')?.count || 0 : 0}
+                  Members: {attendanceDist.find((d: any) => d.type === 'Members')?.count || 0}
                 </span>
                 <span className="text-yellow-400">
-                  Walk-ins: {Array.isArray(attendanceDist) ? attendanceDist.find((d: any) => d.type === 'Walk-ins')?.count || 0 : 0}
+                  Walk-ins: {attendanceDist.find((d: any) => d.type === 'Walk-ins')?.count || 0}
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -555,10 +631,10 @@ export const ReportsPage = () => {
             )}
           </div>
 
-          {/* Contract Status Distribution */}
+          {/* Contract Status */}
           <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
             <h3 className="text-lg font-semibold text-white mb-4">Contract Status</h3>
-            {contractDist && Array.isArray(contractDist) && contractDist.length > 0 ? (
+            {contractDist.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
@@ -568,7 +644,6 @@ export const ReportsPage = () => {
                     labelLine={false}
                     label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
                     outerRadius={80}
-                    fill="#8884d8"
                     dataKey="count"
                     nameKey="status"
                   >

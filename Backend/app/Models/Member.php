@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\MembershipFee;
-use App\Models\Contract; // <-- import Contract
+use App\Models\Contract; 
+use App\Models\WalkinAttendance; 
 
 class Member extends Model
 {
@@ -65,6 +66,11 @@ class Member extends Model
     public function attendances()
     {
         return $this->hasMany(Attendance::class, 'members_id');
+    }
+
+    public function walkin_attendances()
+    {
+        return $this->hasMany(WalkinAttendance::class, 'members_id');
     }
 
     // Check if member can clock in
