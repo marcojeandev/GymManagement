@@ -1,7 +1,7 @@
 FROM php:8.3-fpm-alpine
 
 RUN apk add --no-cache \
-    git curl libpng-dev libonig-dev libxml2-dev zip unzip \
+    git curl libpng-dev libxml2-dev zip unzip \
     libzip-dev libpq-dev icu-dev libjpeg-turbo-dev libwebp-dev \
     freetype-dev openssl-dev oniguruma-dev nodejs npm \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
