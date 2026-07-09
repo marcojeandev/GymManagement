@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB; 
 use App\Models\Member;
 use App\Models\Contract;
 use App\Models\Sale;
@@ -13,7 +14,7 @@ use Carbon\Carbon;
 
 class DashboardCacheService
 {
-    protected $ttl = 0; // ✅ Disable cache for debugging
+    protected $ttl = 300; // 5 minutes
 
     public function getOverview()
     {
@@ -105,69 +106,70 @@ class DashboardCacheService
         });
     }
 
-    public function getSalesTrend($days = 7)
-{
-    $cacheKey = "sales_trend_{$days}";
-    Cache::forget($cacheKey);
-    
-    return Cache::remember($cacheKey, $this->ttl, function () use ($days) {
-        $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+   public function getSalesTrend($days = 7)
+    {
+        $cacheKey = "sales_trend_{$days}";
+        Cache::forget($cacheKey);
         
-        // ✅ Get sales data properly
-        $salesData = Sale::where('created_at', '>=', $startDate)
-            ->selectRaw('DATE(created_at) as date, SUM(payment_amount) as total')
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get()
-            ->keyBy('date');
-
-        // Get contracts
-        $contractData = Contract::where('created_at', '>=', $startDate)
-            ->where('payment_status', 'paid')
-            ->selectRaw('DATE(created_at) as date, SUM(payment_amount) as total')
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get()
-            ->keyBy('date');
-
-        // Get membership fees
-        $membershipData = MembershipFee::where('created_at', '>=', $startDate)
-            ->where('payment_status', 'paid')
-            ->selectRaw('DATE(created_at) as date, SUM(payment_amount) as total')
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get()
-            ->keyBy('date');
-
-        $labels = [];
-        $salesValues = [];
-        $contractValues = [];
-        $membershipValues = [];
-        $totalValues = [];
-
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i)->toDateString();
-            $labels[] = Carbon::parse($date)->format('M d');
+        return Cache::remember($cacheKey, $this->ttl, function () use ($days) {
+            $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
             
-            $sales = (float) ($salesData[$date]->total ?? 0);
-            $contracts = (float) ($contractData[$date]->total ?? 0);
-            $memberships = (float) ($membershipData[$date]->total ?? 0);
-            
-            $salesValues[] = $sales;
-            $contractValues[] = $contracts;
-            $membershipValues[] = $memberships;
-            $totalValues[] = $sales + $contracts + $memberships;
-        }
+            // ✅ USE DB::table() DIRECTLY - SKIPS ELOQUENT
+            $salesData = DB::table('sales')
+                ->where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get()
+                ->keyBy('date');
 
-        return [
-            'labels' => $labels,
-            'values' => $totalValues,
-            'breakdown' => [
-                'sales' => $salesValues,
-                'contracts' => $contractValues,
-                'membership_fees' => $membershipValues,
-            ],
-        ];
-    });
-}
+            $contractData = DB::table('contract')
+                ->where('created_at', '>=', $startDate)
+                ->where('payment_status', 'paid')
+                ->selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get()
+                ->keyBy('date');
+
+            $membershipData = DB::table('membership_fee')
+                ->where('created_at', '>=', $startDate)
+                ->where('payment_status', 'paid')
+                ->selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get()
+                ->keyBy('date');
+
+            $labels = [];
+            $salesValues = [];
+            $contractValues = [];
+            $membershipValues = [];
+            $totalValues = [];
+
+            for ($i = $days - 1; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i)->toDateString();
+                $labels[] = Carbon::parse($date)->format('M d');
+                
+                $sales = (float) ($salesData[$date]->total ?? 0);
+                $contracts = (float) ($contractData[$date]->total ?? 0);
+                $memberships = (float) ($membershipData[$date]->total ?? 0);
+                
+                $salesValues[] = $sales;
+                $contractValues[] = $contracts;
+                $membershipValues[] = $memberships;
+                $totalValues[] = $sales + $contracts + $memberships;
+            }
+
+            return [
+                'labels' => $labels,
+                'values' => $totalValues,
+                'breakdown' => [
+                    'sales' => $salesValues,
+                    'contracts' => $contractValues,
+                    'membership_fees' => $membershipValues,
+                ],
+            ];
+        });
+    }
 }

@@ -11,11 +11,11 @@ export const dashboardApi = {
     return response.data;
   },
 
-  async getSalesTrend(days: number = 7) {
-    const response = await api.get(`/admin/sales-trend?days=${days}`);
-    if (response.data && response.data.status === 1) {
-      return response.data.data;
-    }
-    return response.data;
-  },
+  async getSalesTrend(days: number = 7) { // ✅ BACK TO 7
+  const response = await api.get(`/admin/sales-trend?days=${days}`);
+  if (response.data && response.data.status === 1) {
+    return response.data.data;
+  }
+  return response.data;
+}
 };

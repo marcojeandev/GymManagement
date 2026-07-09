@@ -22,9 +22,9 @@ class DashboardController extends Controller
     }
 
     public function salesTrend(Request $request)
-    {
-        $days = $request->input('days', 7);
-        $data = $this->cacheService->getSalesTrend($days);
-        return response()->json(['status' => 1, 'data' => $data]);
-    }
+{
+    $days = $request->input('days', 7); // ✅ BACK TO 7
+    $data = $this->cacheService->getSalesTrend($days);
+    return response()->json(['status' => 1, 'data' => $data]);
+}
 }

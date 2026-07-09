@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB; 
 use App\Models\Member;
 use App\Models\Contract;
 use App\Models\Sale;
@@ -21,12 +22,10 @@ class CashierDashboardCacheService
             $today = Carbon::today();
             $thisMonth = Carbon::now()->startOfMonth();
 
-            // Calculate sales revenue
             $salesToday = (float) Sale::whereDate('created_at', $today)->sum('payment_amount');
             $salesThisMonth = (float) Sale::where('created_at', '>=', $thisMonth)->sum('payment_amount');
             $salesLastWeek = (float) Sale::where('created_at', '>=', Carbon::now()->subDays(7))->sum('payment_amount');
 
-            // Calculate contract revenue
             $contractToday = (float) Contract::whereDate('created_at', $today)
                 ->where('payment_status', 'paid')
                 ->sum('payment_amount');
@@ -37,7 +36,6 @@ class CashierDashboardCacheService
                 ->where('payment_status', 'paid')
                 ->sum('payment_amount');
 
-            // Calculate membership fee revenue
             $membershipToday = (float) MembershipFee::whereDate('created_at', $today)
                 ->where('payment_status', 'paid')
                 ->sum('payment_amount');
@@ -108,30 +106,36 @@ class CashierDashboardCacheService
         });
     }
 
-    public function getSalesTrend($days = 7)
+   public function getSalesTrend($days = 7)
     {
         $cacheKey = "sales_trend_{$days}";
+        Cache::forget($cacheKey);
+        
         return Cache::remember($cacheKey, $this->ttl, function () use ($days) {
             $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
             
-            $salesData = Sale::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
+            // ✅ USE DB::table() DIRECTLY - SKIPS ELOQUENT
+            $salesData = DB::table('sales')
                 ->where('created_at', '>=', $startDate)
+                ->selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
                 ->groupBy('date')
                 ->orderBy('date', 'asc')
                 ->get()
                 ->keyBy('date');
 
-            $contractData = Contract::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
+            $contractData = DB::table('contract')
                 ->where('created_at', '>=', $startDate)
                 ->where('payment_status', 'paid')
+                ->selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
                 ->groupBy('date')
                 ->orderBy('date', 'asc')
                 ->get()
                 ->keyBy('date');
 
-            $membershipData = MembershipFee::selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
+            $membershipData = DB::table('membership_fee')
                 ->where('created_at', '>=', $startDate)
                 ->where('payment_status', 'paid')
+                ->selectRaw('DATE(created_at) as date, COALESCE(SUM(payment_amount), 0) as total')
                 ->groupBy('date')
                 ->orderBy('date', 'asc')
                 ->get()

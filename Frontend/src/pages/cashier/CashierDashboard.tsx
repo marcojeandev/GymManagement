@@ -42,22 +42,15 @@ export const CashierDashboard = () => {
 
   const fetchDashboard = async () => {
     try {
-      console.log('🔄 Fetching dashboard data...');
-      
       const [dashboardData, trend] = await Promise.all([
         dashboardApi.getDashboard(),
         dashboardApi.getSalesTrend(7),
       ]);
 
-      console.log('📊 Dashboard data:', dashboardData);
-      console.log('📈 Trend data:', trend);
-
-      // ✅ Check if data exists
       if (!dashboardData) {
         throw new Error('No dashboard data received');
       }
 
-      // ✅ Ensure recent_sales is always an array
       const safeData: DashboardData = {
         ...dashboardData,
         recent_sales: Array.isArray(dashboardData.recent_sales)
@@ -70,27 +63,40 @@ export const CashierDashboard = () => {
 
       setData(safeData);
 
-      // ✅ Build chart data with proper validation
+      // ✅ BUILD CHART DATA - FIXED
       if (trend && trend.labels && Array.isArray(trend.labels) && trend.labels.length > 0) {
         const chartData = trend.labels.map((label: string, i: number) => ({
           day: label,
+          // ✅ Use actual sales data from the database
           sales: trend.breakdown?.sales?.[i] ?? 0,
           contracts: trend.breakdown?.contracts?.[i] ?? 0,
           membership: trend.breakdown?.membership_fees?.[i] ?? 0,
           total: trend.values?.[i] ?? 0,
         }));
-        console.log('📊 Chart data:', chartData);
+        
+        console.log('📊 Chart Data:', chartData); // Debug log
         setTrendData(chartData);
       } else {
-        console.warn('⚠️ No trend data available');
-        setTrendData([]);
+        // ✅ If no trend data, create default with zeros
+        const defaultLabels = [];
+        const defaultData = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          defaultLabels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+          defaultData.push({ 
+            day: defaultLabels[defaultLabels.length - 1], 
+            sales: 0, 
+            contracts: 0, 
+            membership: 0, 
+            total: 0 
+          });
+        }
+        setTrendData(defaultData);
       }
-      
-      console.log('✅ Dashboard loaded successfully');
     } catch (error: any) {
-      console.error('❌ Dashboard fetch error:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to load dashboard';
-      toast.error(errorMessage);
+      console.error('Dashboard fetch error:', error);
+      toast.error(error.response?.data?.message || 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }
@@ -101,6 +107,12 @@ export const CashierDashboard = () => {
     if (isNaN(num)) return '₱0.00';
     return `₱${num.toFixed(2)}`;
   };
+
+  // ✅ Calculate totals for the chart display
+  const totalChartRevenue = trendData.reduce((sum, d) => sum + d.total, 0);
+  const totalChartSales = trendData.reduce((sum, d) => sum + d.sales, 0);
+  const totalChartContracts = trendData.reduce((sum, d) => sum + d.contracts, 0);
+  const totalChartMembership = trendData.reduce((sum, d) => sum + d.membership, 0);
 
   if (loading) {
     return (
@@ -122,7 +134,6 @@ export const CashierDashboard = () => {
     );
   }
 
-  // Calculate total revenue
   const totalMonthlyRevenue = data.sales?.total_this_month || 0;
   const totalTodayRevenue = data.sales?.total_today || 0;
   const totalLastWeekRevenue = data.sales?.total_last_week || 0;
@@ -240,7 +251,7 @@ export const CashierDashboard = () => {
                 Revenue Trend (Last 7 Days)
               </h3>
               <span className="text-xs text-gray-400">
-                Total: {formatCurrency(trendData.reduce((sum, d) => sum + d.total, 0))}
+                Total: {formatCurrency(totalChartRevenue)}
               </span>
             </div>
             {trendData.length > 0 ? (
@@ -249,7 +260,15 @@ export const CashierDashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="day" stroke="#9ca3af" fontSize={10} />
                   <YAxis stroke="#9ca3af" fontSize={10} />
-                  <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }}
+                    formatter={(value: any, name: string) => {
+                      if (name === 'sales') return [`₱${value.toFixed(2)}`, 'Product Sales'];
+                      if (name === 'contracts') return [`₱${value.toFixed(2)}`, 'Contracts'];
+                      if (name === 'membership') return [`₱${value.toFixed(2)}`, 'Membership Fees'];
+                      return [`₱${value.toFixed(2)}`, name];
+                    }}
+                  />
                   <Legend />
                   <Bar dataKey="sales" stackId="a" fill="#3b82f6" name="Product Sales" />
                   <Bar dataKey="contracts" stackId="a" fill="#22c55e" name="Contracts" />
