@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Cashier\MembersRequest;
 use App\Models\Member;
 use App\Models\MembershipFee;
+use App\Models\GymSetting;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class MembersController extends Controller
 {
@@ -26,7 +29,6 @@ class MembersController extends Controller
 
             $query = Member::query();
 
-            // Apply search filter
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
@@ -37,12 +39,10 @@ class MembersController extends Controller
                 });
             }
 
-            // Apply sex filter
             if ($request->filled('sex') && in_array($request->sex, ['male', 'female'])) {
                 $query->where('sex', $request->sex);
             }
 
-            // Apply membership status filter
             if ($request->filled('membership_status')) {
                 $query->where('membership_status', $request->membership_status);
             }
@@ -55,6 +55,7 @@ class MembersController extends Controller
                 'data'   => $members,
             ]);
         } catch (\Throwable $e) {
+            Log::error('Members index error: ' . $e->getMessage());
             return $this->errorResponse('Server error.');
         }
     }
@@ -73,6 +74,7 @@ class MembersController extends Controller
                 'data'   => $member,
             ]);
         } catch (\Throwable $e) {
+            Log::error('Member show error: ' . $e->getMessage());
             return $this->errorResponse('Server error.');
         }
     }
@@ -98,12 +100,16 @@ class MembersController extends Controller
             // Create membership fee if provided
             $this->createMembershipFee($member, $validated);
 
+            // Send QR code email
+            $this->sendQRCodeEmail($member);
+
             return response()->json([
                 'status'  => 1,
-                'message' => 'Member created successfully.',
+                'message' => 'Member created successfully. QR code sent to email.',
                 'data'    => $member->load('membershipFee'),
             ], 201);
         } catch (\Throwable $e) {
+            Log::error('Member store error: ' . $e->getMessage());
             return $this->errorResponse('Server error: ' . $e->getMessage());
         }
     }
@@ -144,6 +150,7 @@ class MembersController extends Controller
                 'data'    => $member->load('membershipFee'),
             ]);
         } catch (\Throwable $e) {
+            Log::error('Member update error: ' . $e->getMessage());
             return $this->errorResponse('Server error: ' . $e->getMessage());
         }
     }
@@ -163,6 +170,7 @@ class MembersController extends Controller
                 'message' => 'Member deleted successfully.',
             ]);
         } catch (\Throwable $e) {
+            Log::error('Member delete error: ' . $e->getMessage());
             return $this->errorResponse('Server error.');
         }
     }
@@ -188,7 +196,27 @@ class MembersController extends Controller
                 'data'   => $member->load('membershipFee'),
             ]);
         } catch (\Throwable $e) {
+            Log::error('QR lookup error: ' . $e->getMessage());
             return $this->errorResponse('Server error.');
+        }
+    }
+
+    /**
+     * Resend QR code to member email.
+     */
+    public function resendQRCode($id)
+    {
+        try {
+            $member = Member::findOrFail($id);
+            $this->sendQRCodeEmail($member);
+
+            return response()->json([
+                'status' => 1,
+                'message' => 'QR code resent successfully to ' . $member->email,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Resend QR error: ' . $e->getMessage());
+            return $this->errorResponse('Failed to send QR code: ' . $e->getMessage());
         }
     }
 
@@ -263,6 +291,52 @@ class MembersController extends Controller
                 $feeData['members_id'] = $member->id;
                 $member->membershipFee()->create($feeData);
             }
+        }
+    }
+
+    /**
+     * Send QR code email to member with QR image (no imagick needed).
+     */
+    private function sendQRCodeEmail(Member $member): void
+    {
+        try {
+            // Get gym settings
+            $gym = GymSetting::first();
+            $gymName = $gym->gym_name ?? 'Gym Management System';
+            $gymEmail = $gym->email ?? 'info@gym.com';
+            $gymContact = $gym->contact ?? 'N/A';
+            
+            // Get logo URL
+            $gymLogo = null;
+            if ($gym && $gym->logo) {
+                $gymLogo = asset('storage/' . $gym->logo);
+            }
+
+            // ✅ Use free QR Code API (no imagick needed)
+            $qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($member->qr_code);
+
+            // Prepare email data
+            $data = [
+                'member' => $member,
+                'gym_name' => $gymName,
+                'gym_logo' => $gymLogo,
+                'gym_email' => $gymEmail,
+                'gym_contact' => $gymContact,
+                'qr_code_url' => $qrCodeUrl,
+                'qr_code' => $member->qr_code,
+            ];
+
+            // Send email
+            Mail::send('emails.member-qr-code', $data, function ($message) use ($member, $gymName, $gymEmail) {
+                $message->to($member->email, $member->firstname . ' ' . $member->lastname)
+                        ->from($gymEmail, $gymName)
+                        ->subject('Your Gym Membership QR Code - ' . $gymName);
+            });
+
+            Log::info('QR code email sent to: ' . $member->email);
+        } catch (\Exception $e) {
+            Log::error('Failed to send QR code email: ' . $e->getMessage());
+            // Don't throw - member is still created, email is optional
         }
     }
 

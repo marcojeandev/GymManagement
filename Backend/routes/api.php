@@ -74,6 +74,7 @@ Route::middleware(['auth:sanctum', 'admin', 'throttle:60,1'])
         // Members Management
         Route::apiResource('members', MembersController::class);
         Route::get('members/by-qr/{qrCode}', [MembersController::class, 'getByQR']);
+        Route::post('members/{id}/resend-qr', [MembersController::class, 'resendQRCode']);
 
         // Contract Management
         Route::apiResource('contracts', ContractController::class);
