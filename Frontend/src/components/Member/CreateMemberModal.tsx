@@ -49,7 +49,6 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
-  // Load pricing when modal opens
   useEffect(() => {
     if (isOpen) {
       loadPricing();
@@ -66,23 +65,23 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
     return () => {
       stopCamera();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Auto-calculate total_amount when pricing or payment_amount changes
   useEffect(() => {
     const price = pricing?.price ?? 0;
-    const paymentAmount = parseFloat(form.payment_amount) || 0;
-    const total = price + paymentAmount;
-    const totalAmount = total > 0 ? String(total.toFixed(2)) : '';
+    const paymentAmount = Number(form.payment_amount) || 0;
+
+    const totalAmount =
+      price + paymentAmount > 0
+        ? price + paymentAmount
+        : '';
 
     setForm((prev) => ({
       ...prev,
       total_amount: totalAmount,
     }));
-  }, [pricing, form.payment_amount]);
+  }, [pricing?.price, form.payment_amount]);
 
-  // Handle camera video play
   useEffect(() => {
     if (cameraOpen && stream && videoRef.current) {
       const video = videoRef.current;
@@ -106,11 +105,11 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
     try {
       const data = await systemSettingsApi.getMembershipPrice();
       setPricing(data);
-      if (data && data.id) {
+
+      if (data?.id) {
         setForm((prev) => ({
           ...prev,
           membership_id: data.id,
-          total_amount: data.price ? String(data.price) : '',
         }));
       }
     } catch (error) {
@@ -436,10 +435,12 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
               <label className="block text-sm font-medium text-gray-300">Total Amount</label>
               <input
                 type="text"
-                name="total_amount"
-                value={form.total_amount || ''}
+                value={
+                  form.total_amount === ''
+                    ? ''
+                    : Number(form.total_amount).toFixed(2)
+                }
                 readOnly
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-green-400 font-semibold cursor-not-allowed"
               />
               <p className="text-xs text-gray-500 mt-1">Price + Payment Amount</p>
             </div>
