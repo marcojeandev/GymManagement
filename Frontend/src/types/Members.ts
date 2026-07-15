@@ -11,7 +11,7 @@ export interface Member {
   profile: string | null;
   sex: 'male' | 'female';
   membership_status: 'active' | 'expired';
-  contract_status: 'active' | 'expired';
+  contract_status: 'active' | 'expired' | 'pending';
   created_at: string;
   updated_at: string;
   membership_fee?: MembershipFee | null;
@@ -47,7 +47,7 @@ export interface MemberFormData {
   address: string;
   sex: 'male' | 'female';
   membership_status: 'active' | 'expired';
-  contract_status: 'active' | 'expired';
+  contract_status: 'active' | 'expired' | 'pending';
   membership_id: number | '';
   payment_type: 'cash' | 'gcash';
   payment_amount: number | '';

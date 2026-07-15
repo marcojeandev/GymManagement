@@ -5,9 +5,10 @@ import type { Member, MemberFilters } from '../../types/Members';
 import { CreateMemberModal } from '../../components/cashier/Member/CreateMemberModal';
 import { UpdateMemberModal } from '../../components/cashier/Member/UpdateMemberModal';
 import { ViewMemberModal } from '../../components/cashier/Member/ViewMemberModal';
-import { DeleteMemberModal } from '../../components/cashier/Member/DeleteMemberModal';
 import toast from 'react-hot-toast';
-import { Plus, Search, Eye, Pencil, Trash2, User } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, User } from 'lucide-react';
+
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage';
 
 export const MembersPage = () => {
   const [members, setMembers] = useState<Member[]>([]);
@@ -23,7 +24,6 @@ export const MembersPage = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   useEffect(() => {
@@ -70,10 +70,7 @@ export const MembersPage = () => {
     setUpdateOpen(true);
   };
 
-  const openDelete = (member: Member) => {
-    setSelectedMember(member);
-    setDeleteOpen(true);
-  };
+
 
   return (
     <CashierLayout>
@@ -174,7 +171,7 @@ export const MembersPage = () => {
                       <td className="px-4 py-3">
                         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold overflow-hidden shadow-md">
                           {member.profile ? (
-                            <img src={`http://localhost:8000/storage/${member.profile}`} alt="" className="h-full w-full object-cover" />
+                            <img src={`${STORAGE_URL}/${member.profile}`} alt="" className="h-full w-full object-cover" />
                           ) : (
                             member.firstname.charAt(0).toUpperCase()
                           )}
@@ -188,16 +185,14 @@ export const MembersPage = () => {
                       <td className="px-4 py-3 text-gray-300">+63{member.contact}</td>
                       <td className="px-4 py-3 text-gray-300 capitalize">{member.sex}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          member.membership_status === 'active' ? 'bg-green-600/30 text-green-300' : 'bg-red-600/30 text-red-300'
-                        }`}>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${member.membership_status === 'active' ? 'bg-green-600/30 text-green-300' : 'bg-red-600/30 text-red-300'
+                          }`}>
                           {member.membership_status}
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                          member.contract_status === 'active' ? 'bg-green-600/30 text-green-300' : 'bg-red-600/30 text-red-300'
-                        }`}>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${member.contract_status === 'active' ? 'bg-green-600/30 text-green-300' : 'bg-red-600/30 text-red-300'
+                          }`}>
                           {member.contract_status}
                         </span>
                       </td>
@@ -216,13 +211,6 @@ export const MembersPage = () => {
                             title="Edit"
                           >
                             <Pencil size={16} />
-                          </button>
-                          <button
-                            onClick={() => openDelete(member)}
-                            className="p-1.5 text-red-400 hover:text-white border border-red-400/30 hover:bg-red-500/20 rounded-lg transition group-hover:border-red-400/60"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -274,12 +262,6 @@ export const MembersPage = () => {
         <ViewMemberModal
           isOpen={viewOpen}
           onClose={() => { setViewOpen(false); setSelectedMember(null); }}
-          member={selectedMember}
-        />
-        <DeleteMemberModal
-          isOpen={deleteOpen}
-          onClose={() => { setDeleteOpen(false); setSelectedMember(null); }}
-          onSuccess={fetchMembers}
           member={selectedMember}
         />
       </div>

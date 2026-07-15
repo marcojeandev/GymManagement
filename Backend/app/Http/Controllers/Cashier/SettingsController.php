@@ -7,42 +7,39 @@ use Illuminate\Http\Request;
 use App\Models\MembershipPrice;
 use App\Models\ContractPrice;
 use App\Models\GymSetting;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Log;
 
 class SettingsController extends Controller
 {
-    use AuthorizesRequests;
-
     public function getMembershipPrice()
     {
         try {
             $membershipPrice = MembershipPrice::first();
-            $this->authorize('view', $membershipPrice ?? MembershipPrice::class);
 
             return response()->json([
                 'status' => 1,
                 'data' => $membershipPrice
             ]);
         } catch (\Throwable $e) {
+            Log::error('MembershipPrice error: ' . $e->getMessage());
             return response()->json([
                 'status' => 0,
-                'message' => 'Server error.'
+                'message' => 'Server error: ' . $e->getMessage()
             ], 500);
         }
     }
-
 
     public function getGymSettings()
     {
         try {
             $gymSetting = GymSetting::first();
-            $this->authorize('view', $gymSetting ?? GymSetting::class);
 
             return response()->json([
                 'status' => 1,
                 'data' => $gymSetting
             ]);
         } catch (\Throwable $e) {
+            Log::error('GymSettings error: ' . $e->getMessage());
             return response()->json([
                 'status' => 0,
                 'message' => 'Server error.'
@@ -53,18 +50,18 @@ class SettingsController extends Controller
     public function getContractPrices()
     {
         try {
-            $this->authorize('viewAny', ContractPrice::class);
             $prices = ContractPrice::all();
+            
             return response()->json([
                 'status' => 1,
                 'data' => $prices,
             ]);
         } catch (\Throwable $e) {
+            Log::error('ContractPrices error: ' . $e->getMessage());
             return response()->json([
                 'status' => 0,
                 'message' => 'Server error: ' . $e->getMessage(),
             ], 500);
         }
     }
-   
 }

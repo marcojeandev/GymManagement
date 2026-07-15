@@ -23,6 +23,7 @@ return new class extends Migration
                   ->onDelete('cascade');
             $table->datetime('time_in');
             $table->decimal('fee_paid', 10, 2);
+            $table->decimal('total_amount', 10, 2)->nullable();
             $table->timestamps();
         });
     }

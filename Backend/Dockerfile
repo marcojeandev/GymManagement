@@ -39,8 +39,8 @@ COPY --from=builder /app /var/www
 
 RUN mkdir -p /var/www/bootstrap/cache \
     && chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage \
-    && chmod -R 755 /var/www/bootstrap/cache
+    && chmod -R 775 /var/www/storage \
+    && chmod -R 775 /var/www/bootstrap/cache
 
 RUN echo "memory_limit=256M" > /usr/local/etc/php/conf.d/memory-limit.ini \
     && echo "upload_max_filesize=100M" > /usr/local/etc/php/conf.d/upload.ini \
@@ -52,6 +52,16 @@ RUN echo "memory_limit=256M" > /usr/local/etc/php/conf.d/memory-limit.ini \
     && echo "opcache.max_accelerated_files=10000" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.revalidate_freq=2" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.fast_shutdown=1" >> /usr/local/etc/php/conf.d/opcache.ini
+
+    # Create cache directories
+RUN mkdir -p /var/www/bootstrap/cache \
+    && mkdir -p /var/www/storage/framework/cache \
+    && mkdir -p /var/www/storage/framework/sessions \
+    && mkdir -p /var/www/storage/framework/views
+
+# Set permissions
+RUN chmod -R 775 /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage/framework
 
 EXPOSE 9000
 

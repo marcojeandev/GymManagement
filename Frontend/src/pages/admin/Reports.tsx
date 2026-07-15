@@ -28,6 +28,7 @@ import {
   UserPlus,
   Download,
   Printer,
+  User,
 } from 'lucide-react';
 
 const COLORS = ['#ef4444', '#dc2626', '#f87171', '#b91c1c', '#7f1d1d'];
@@ -44,6 +45,7 @@ export const ReportsPage = () => {
   const [contractDist, setContractDist] = useState<any[]>([]);
   const [attendanceDist, setAttendanceDist] = useState<any[]>([]);
   const [revenue, setRevenue] = useState<any>(null);
+  const [revenueTrend, setRevenueTrend] = useState<any>(null);
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
@@ -67,6 +69,7 @@ export const ReportsPage = () => {
         contractDistRes,
         attendanceDistRes,
         revenueRes,
+        revenueTrendRes,
       ] = await Promise.all([
         reportsApi.getOverview(),
         reportsApi.getMemberGrowth(12),
@@ -78,42 +81,27 @@ export const ReportsPage = () => {
         reportsApi.getContractDistribution(),
         reportsApi.getAttendanceDistribution(dateRange.start, dateRange.end),
         reportsApi.getRevenue(dateRange.start, dateRange.end),
+        reportsApi.getSalesTrend(7), // Last 7 days for revenue trend
       ]);
 
-      // Log raw responses for debugging
-      console.log('=== RAW RESPONSES ===');
-      console.log('Overview:', overviewRes);
-      console.log('Sales Trend:', salesTrendRes);
-      console.log('Top Products:', topProductsRes);
-      console.log('Membership Dist:', membershipDistRes);
-      console.log('Contract Dist:', contractDistRes);
-
-      // Extract data - handle both { status: 1, data: {...} } and direct { data: {...} }
       const extract = (res: any) => {
         if (!res) return null;
-        // If response has status and data
         if (res.status !== undefined && res.data !== undefined) {
           return res.data;
         }
-        // If response is already the data
         if (res.data !== undefined) {
           return res.data;
         }
         return res;
       };
 
-      // Set all data
       setOverview(extract(overviewRes));
       setMemberGrowth(extract(memberGrowthRes));
       
-      // Sales Trend - extract and ensure it has labels/values
       const salesData = extract(salesTrendRes);
-      console.log('Extracted Sales Trend:', salesData);
       setSalesTrend(salesData);
       
-      // Top Products - extract and ensure it's an array
       const productsData = extract(topProductsRes);
-      console.log('Extracted Top Products:', productsData);
       setTopProducts(Array.isArray(productsData) ? productsData : []);
       
       setAttendanceTrend(extract(attendanceTrendRes));
@@ -122,17 +110,18 @@ export const ReportsPage = () => {
       setSalesByPayment(Array.isArray(paymentData) ? paymentData : []);
       
       const membershipData = extract(membershipDistRes);
-      console.log('Extracted Membership Data:', membershipData);
       setMembershipDist(Array.isArray(membershipData) ? membershipData : []);
       
       const contractData = extract(contractDistRes);
-      console.log('Extracted Contract Data:', contractData);
       setContractDist(Array.isArray(contractData) ? contractData : []);
       
       const attendanceData = extract(attendanceDistRes);
       setAttendanceDist(Array.isArray(attendanceData) ? attendanceData : []);
       
       setRevenue(extract(revenueRes));
+      
+      const revenueTrendData = extract(revenueTrendRes);
+      setRevenueTrend(revenueTrendData);
 
     } catch (error) {
       console.error('Reports fetch error:', error);
@@ -146,7 +135,6 @@ export const ReportsPage = () => {
     return `₱${value.toFixed(2)}`;
   };
 
-  // ========== CSV Export ==========
   const exportCSV = () => {
     let csv = 'Gym Management System - Report\n';
     csv += `Generated on: ${new Date().toLocaleString()}\n`;
@@ -162,7 +150,9 @@ export const ReportsPage = () => {
     csv += `Attendance (Month),${overview?.attendance?.this_month || 0}\n`;
     csv += `Attendance (Today),${overview?.attendance?.today || 0}\n`;
     csv += `Total Walk-ins,${overview?.walkins?.total || 0}\n`;
-    csv += `Walk-ins (Today),${overview?.walkins?.today || 0}\n\n`;
+    csv += `Walk-ins (Today),${overview?.walkins?.today || 0}\n`;
+    csv += `Walk-in Revenue (Today),${formatCurrency(overview?.walkins?.today_revenue || 0)}\n`;
+    csv += `Walk-in Revenue (Month),${formatCurrency(overview?.walkins?.this_month_revenue || 0)}\n\n`;
 
     csv += 'SALES TREND (Daily)\n';
     csv += 'Day,Sales (₱)\n';
@@ -218,6 +208,7 @@ export const ReportsPage = () => {
     csv += `Product Sales,${formatCurrency(revenue?.breakdown?.sales || 0)}\n`;
     csv += `Contracts,${formatCurrency(revenue?.breakdown?.contracts || 0)}\n`;
     csv += `Membership Fees,${formatCurrency(revenue?.breakdown?.membership_fees || 0)}\n`;
+    csv += `Walk-ins,${formatCurrency(revenue?.breakdown?.walk_ins || 0)}\n`;
     csv += '\n';
 
     csv += `TOTAL REVENUE (Period),${formatCurrency(revenue?.total_revenue || 0)}\n`;
@@ -233,7 +224,6 @@ export const ReportsPage = () => {
     toast.success('CSV exported successfully');
   };
 
-  // ========== Print ==========
   const handlePrint = () => {
     const style = document.createElement('style');
     style.id = 'print-style';
@@ -264,10 +254,14 @@ export const ReportsPage = () => {
     );
   }
 
-  // Prepare chart data
   const salesTrendData = salesTrend?.labels?.map((label: string, i: number) => ({
     day: label,
     sales: salesTrend?.values?.[i] || 0,
+  })) || [];
+
+  const revenueTrendData = revenueTrend?.labels?.map((label: string, i: number) => ({
+    day: label,
+    revenue: revenueTrend?.values?.[i] || 0,
   })) || [];
 
   const memberGrowthData = memberGrowth?.labels?.map((label: string, i: number) => ({
@@ -280,7 +274,8 @@ export const ReportsPage = () => {
     attendance: attendanceTrend?.values?.[i] || 0,
   })) || [];
 
- const hasSalesData = salesTrendData.length > 0 && salesTrendData.some((d: any) => d.sales > 0);
+  const hasSalesData = salesTrendData.length > 0 && salesTrendData.some((d: any) => d.sales > 0);
+  const hasRevenueTrendData = revenueTrendData.length > 0 && revenueTrendData.some((d: any) => d.revenue > 0);
   const hasProductData = topProducts.length > 0;
   const hasAttendanceData = attendanceTrendData.length > 0;
 
@@ -390,8 +385,75 @@ export const ReportsPage = () => {
             </div>
           </div>
 
+          {/* Walk-in Revenue Card */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div className="bg-[#14181f] rounded-2xl border border-purple-700/50 p-5 shadow-xl shadow-purple-500/5 print-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">Walk-ins (Total)</p>
+                  <p className="text-2xl font-bold text-white">{overview?.walkins?.total || 0}</p>
+                  <p className="text-xs text-gray-500 mt-1">Today: {overview?.walkins?.today || 0}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-purple-600/20 flex items-center justify-center">
+                  <User className="text-purple-400" size={24} />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#14181f] rounded-2xl border border-orange-700/50 p-5 shadow-xl shadow-orange-500/5 print-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">Walk-in Revenue (Today)</p>
+                  <p className="text-2xl font-bold text-white">{formatCurrency(overview?.walkins?.today_revenue || 0)}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-orange-600/20 flex items-center justify-center">
+                  <DollarSign className="text-orange-400" size={24} />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#14181f] rounded-2xl border border-orange-700/50 p-5 shadow-xl shadow-orange-500/5 print-card">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">Walk-in Revenue (Month)</p>
+                  <p className="text-2xl font-bold text-white">{formatCurrency(overview?.walkins?.this_month_revenue || 0)}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-orange-600/20 flex items-center justify-center">
+                  <TrendingUp className="text-orange-400" size={24} />
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Revenue Trend - Last 7 Days */}
+            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <DollarSign size={20} className="text-yellow-400" />
+                Revenue Trend (Last 7 Days)
+              </h3>
+              {hasRevenueTrendData ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={revenueTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="day" stroke="#9ca3af" fontSize={10} />
+                    <YAxis stroke="#9ca3af" fontSize={10} />
+                    <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                    <Area type="monotone" dataKey="revenue" stroke="#f59e0b" fill="#f59e0b40" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-gray-400">
+                  <div className="text-center">
+                    <DollarSign size={48} className="mx-auto text-gray-600 mb-2" />
+                    <p>No revenue data available</p>
+                    <p className="text-sm text-gray-500">Revenue will appear here once you have transactions</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Member Growth */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -414,8 +476,10 @@ export const ReportsPage = () => {
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Sales Trend */}
+          {/* Sales Trend */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <DollarSign size={20} className="text-yellow-400" />
@@ -479,7 +543,10 @@ export const ReportsPage = () => {
                 </div>
               )}
             </div>
+          </div>
 
+          {/* Attendance and Payment Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Attendance Trend */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -535,7 +602,10 @@ export const ReportsPage = () => {
                 </div>
               )}
             </div>
+          </div>
 
+          {/* Membership and Contract Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Membership Distribution */}
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4">Membership Status</h3>
@@ -568,16 +638,43 @@ export const ReportsPage = () => {
                 </div>
               )}
             </div>
+
+            {/* Contract Status */}
+            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
+              <h3 className="text-lg font-semibold text-white mb-4">Contract Status</h3>
+              {contractDist.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={contractDist}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      dataKey="count"
+                      nameKey="status"
+                    >
+                      {contractDist.map((entry: any, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.status === 'active' ? '#22c55e' : '#ef4444'} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-gray-400">
+                  <div className="text-center">
+                    <FileText size={48} className="mx-auto text-gray-600 mb-2" />
+                    <p>No contract data available</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Additional Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5 print-card">
-              <p className="text-gray-400 text-sm">Walk-ins (Total)</p>
-              <p className="text-2xl font-bold text-white">{overview?.walkins?.total || 0}</p>
-              <p className="text-xs text-gray-500 mt-1">Today: {overview?.walkins?.today || 0}</p>
-            </div>
-
             <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5 print-card">
               <p className="text-gray-400 text-sm">Attendance (Member vs Walk-in)</p>
               <div className="flex gap-4 mt-1">
@@ -602,13 +699,23 @@ export const ReportsPage = () => {
                 {dateRange.start} – {dateRange.end}
               </p>
             </div>
+
+            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5 print-card">
+              <p className="text-gray-400 text-sm">Revenue Breakdown</p>
+              <div className="grid grid-cols-2 gap-1 mt-1 text-xs">
+                <span className="text-blue-400">Sales: {formatCurrency(revenue?.breakdown?.sales || 0)}</span>
+                <span className="text-green-400">Contracts: {formatCurrency(revenue?.breakdown?.contracts || 0)}</span>
+                <span className="text-purple-400">Membership: {formatCurrency(revenue?.breakdown?.membership_fees || 0)}</span>
+                <span className="text-orange-400">Walk-ins: {formatCurrency(revenue?.breakdown?.walk_ins || 0)}</span>
+              </div>
+            </div>
           </div>
 
-          {/* Revenue Breakdown */}
+          {/* Revenue Breakdown - Full Card */}
           <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card mb-8">
             <h3 className="text-lg font-semibold text-white mb-4">Revenue Breakdown</h3>
             {revenue?.breakdown ? (
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
                 <div className="bg-gray-800/50 rounded-lg p-4 text-center">
                   <p className="text-gray-400 text-sm">Total Revenue</p>
                   <p className="text-2xl font-bold text-white">{formatCurrency(revenue.total_revenue || 0)}</p>
@@ -625,42 +732,13 @@ export const ReportsPage = () => {
                   <p className="text-gray-400 text-sm">Membership Fees</p>
                   <p className="text-2xl font-bold text-purple-400">{formatCurrency(revenue.breakdown.membership_fees || 0)}</p>
                 </div>
+                <div className="bg-orange-900/20 rounded-lg p-4 text-center border border-orange-500/30">
+                  <p className="text-gray-400 text-sm">Walk-ins</p>
+                  <p className="text-2xl font-bold text-orange-400">{formatCurrency(revenue.breakdown.walk_ins || 0)}</p>
+                </div>
               </div>
             ) : (
               <div className="text-center text-gray-400 py-8">No revenue data available</div>
-            )}
-          </div>
-
-          {/* Contract Status */}
-          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
-            <h3 className="text-lg font-semibold text-white mb-4">Contract Status</h3>
-            {contractDist.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={contractDist}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    dataKey="count"
-                    nameKey="status"
-                  >
-                    {contractDist.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.status === 'active' ? '#22c55e' : '#ef4444'} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[250px] text-gray-400">
-                <div className="text-center">
-                  <FileText size={48} className="mx-auto text-gray-600 mb-2" />
-                  <p>No contract data available</p>
-                </div>
-              </div>
             )}
           </div>
         </div>

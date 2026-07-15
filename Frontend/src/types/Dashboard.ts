@@ -33,6 +33,9 @@ export interface DashboardData {
   walkins: {
     today: number;
     this_month: number;
+    revenue_today: number;      // ✅ ADDED
+    revenue_this_month: number; // ✅ ADDED
+    revenue_last_week: number;  // ✅ ADDED
   };
   recent_sales: Array<{
     id: number;

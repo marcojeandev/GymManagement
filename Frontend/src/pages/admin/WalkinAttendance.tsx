@@ -135,10 +135,19 @@ export const WalkinAttendancePage = () => {
                   attendances.map((attendance) => (
                     <tr key={attendance.id} className="hover:bg-gray-700/20 transition group">
                       <td className="px-4 py-3 text-white font-medium">
-                        {attendance.walkin_info?.firstname} {attendance.walkin_info?.lastname}
-                        {attendance.walkin_info?.suffix && ` ${attendance.walkin_info.suffix}`}
+                        {attendance.walkin_info ? (
+                          `${attendance.walkin_info.firstname} ${attendance.walkin_info.lastname}${attendance.walkin_info.suffix ? ` ${attendance.walkin_info.suffix}` : ''}`
+                        ) : attendance.member ? (
+                          `${attendance.member.firstname} ${attendance.member.lastname}${attendance.member.suffix ? ` ${attendance.member.suffix}` : ''}`
+                        ) : (
+                          '—'
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-gray-300">+63{attendance.walkin_info?.contact || '—'}</td>
+                      <td className="px-4 py-3 text-gray-300">
+                        {attendance.walkin_info?.contact ? `+63${attendance.walkin_info.contact}` :
+                        attendance.member?.contact ? `+63${attendance.member.contact}` :
+                        '—'}
+                      </td>
                       <td className="px-4 py-3 text-gray-300">
                         {new Date(attendance.time_in).toLocaleString()}
                       </td>

@@ -39,21 +39,8 @@ export const ContractsPage = () => {
       const contractsResponse = await contractApi.getContracts({ per_page: 1000 });
       const allContracts: Contract[] = contractsResponse?.data || [];
 
-      const latestContractMap = new Map<number, string>();
-      allContracts.forEach(contract => {
-        const memberId = contract.members_id;
-        const current = latestContractMap.get(memberId);
-        const newRange = formatRange(contract);
-        if (!current) {
-          latestContractMap.set(memberId, newRange);
-        } else {
-          const existingDate = current ? new Date(current.split('→')[1]?.trim() || 0) : new Date(0);
-          const newDate = contract.contract_to ? new Date(contract.contract_to) : new Date(0);
-          if (newDate > existingDate) {
-            latestContractMap.set(memberId, newRange);
-          }
-        }
-      });
+      // Map: memberId → { range: string, toDate: Date }
+      const latestContractMap = new Map<number, { range: string; toDate: Date }>();
 
       function formatRange(contract: Contract): string {
         const from = contract.contract_from ? new Date(contract.contract_from).toLocaleDateString() : '—';
@@ -61,9 +48,18 @@ export const ContractsPage = () => {
         return `${from} → ${to}`;
       }
 
+      allContracts.forEach(contract => {
+        const memberId = contract.members_id;
+        const newDate = contract.contract_to ? new Date(contract.contract_to) : new Date(0);
+        const existing = latestContractMap.get(memberId);
+        if (!existing || newDate > existing.toDate) {
+          latestContractMap.set(memberId, { range: formatRange(contract), toDate: newDate });
+        }
+      });
+
       const enrichedMembers = membersData.map((member: Member) => ({
         ...member,
-        latestContractRange: latestContractMap.get(member.id) || 'No contract',
+        latestContractRange: latestContractMap.get(member.id)?.range || 'No contract',
       }));
 
       setMembers(enrichedMembers);

@@ -22,7 +22,7 @@ const initialForm: MemberFormData = {
   address: '',
   sex: 'male',
   membership_status: 'active',
-  contract_status: 'active',
+  contract_status: 'pending',
   membership_id: '',
   payment_type: 'cash',
   payment_amount: '',
@@ -41,7 +41,6 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
-  // Camera states
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraLoading, setCameraLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -53,7 +52,14 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
     if (isOpen) {
       loadPricing();
       const orNum = 'OR-' + Date.now().toString().slice(-8);
-      setForm((prev) => ({ ...prev, or_number: orNum }));
+      const now = new Date();
+      const formattedDate = now.toISOString().slice(0, 16);
+      setForm((prev) => ({
+        ...prev,
+        or_number: orNum,
+        paid_at: formattedDate,
+        contract_status: 'pending',
+      }));
     }
     return () => {
       stopCamera();
@@ -61,11 +67,6 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // FIX: attach the MediaStream to the <video> element only after it has
-  // actually mounted (i.e. once cameraOpen is true and videoRef is set).
-  // Previously the stream was attached inside startCamera() before the
-  // video element existed in the DOM, which produced a permanently black
-  // preview and black captured photos.
   useEffect(() => {
     if (cameraOpen && stream && videoRef.current) {
       const video = videoRef.current;
@@ -110,8 +111,6 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
         audio: false,
       });
       setStream(mediaStream);
-      // Mount the <video> element first; the effect above attaches the
-      // stream once videoRef.current is actually available.
       setCameraOpen(true);
     } catch (err) {
       console.error('Camera error:', err);
@@ -375,18 +374,14 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300">Contract Status *</label>
-              <select
-                name="contract_status"
-                required
-                value={form.contract_status}
-                onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-              >
-                <option value="active">Active</option>
-                <option value="expired">Expired</option>
-                <option value="pending">Pending</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-300">Contract Status</label>
+              <input
+                type="text"
+                value="Pending"
+                readOnly
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-gray-400 cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-500 mt-1">Auto-set to Pending</p>
             </div>
           </div>
 
@@ -487,10 +482,11 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
                 onChange={handleChange}
                 className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
               />
+              <p className="text-xs text-gray-500 mt-1">Auto-set to current time</p>
             </div>
           </div>
 
-          {/* ===== Profile Photo – FIXED CAMERA ===== */}
+          {/* Profile Photo */}
           <div>
             <label className="block text-sm font-medium text-gray-300">Profile Photo</label>
             <div className="mt-2">
@@ -533,7 +529,6 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
                   {cameraError && (
                     <div className="text-red-400 text-sm mb-2">{cameraError}</div>
                   )}
-                  {/* Video container - portrait orientation (taller than wide) */}
                   <div
                     className="bg-black rounded-lg overflow-hidden relative mx-auto"
                     style={{ aspectRatio: '3 / 4', maxWidth: '360px', width: '100%' }}

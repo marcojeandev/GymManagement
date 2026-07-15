@@ -6,6 +6,8 @@ import type { MembershipPrice } from '../../../services/cashier/systemSettingsAp
 import type { Member, MemberFormData } from '../../../types/Members';
 import { X, Upload } from 'lucide-react';
 
+const STORAGE_URL = import.meta.env.VITE_STORAGE_URL || 'http://localhost:8000/storage';
+
 interface UpdateMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,7 +33,11 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
         lastname: member.lastname,
         suffix: member.suffix || '',
         email: member.email,
-        contact: member.contact.replace('+63', ''),
+        contact: member.contact.startsWith('+63')
+          ? member.contact.slice(3)
+          : member.contact.startsWith('63') && member.contact.length > 10
+          ? member.contact.slice(2)
+          : member.contact,
         address: member.address,
         sex: member.sex,
         membership_status: member.membership_status,
@@ -45,7 +51,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
         paid_at: fee?.paid_at ? new Date(fee.paid_at).toISOString().slice(0, 16) : '',
         profile: null,
       });
-      setPreview(member.profile ? `http://localhost:8000/storage/${member.profile}` : null);
+      setPreview(member.profile ? `${STORAGE_URL}/${member.profile}` : null);
     }
   }, [isOpen, member]);
 
@@ -69,7 +75,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
         reader.onload = () => setPreview(reader.result as string);
         reader.readAsDataURL(file);
       } else {
-        setPreview(member?.profile ? `http://localhost:8000/storage/${member.profile}` : null);
+        setPreview(member?.profile ? `${STORAGE_URL}/${member.profile}` : null);
       }
     } else {
       setForm((prev) => prev ? { ...prev, [name]: value } : null);

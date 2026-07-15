@@ -343,13 +343,25 @@ export const AdminDashboard = () => {
               <p className="text-xl font-bold text-white">{data.attendance?.today || 0}</p>
             </div>
           </div>
-          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-4 shadow-xl shadow-red-500/5 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-pink-600/20 flex items-center justify-center">
-              <DollarSign className="text-pink-400" size={24} />
-            </div>
-            <div>
-              <p className="text-gray-400 text-sm">Revenue Today</p>
-              <p className="text-xl font-bold text-white">{formatCurrency(totalTodayRevenue)}</p>
+          <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-5 shadow-xl shadow-red-500/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-400 text-sm">Revenue Today</p>
+                <p className="text-2xl font-bold text-white">
+                  {formatCurrency(
+                    (data.sales?.today || 0) +
+                    (data.contracts?.revenue_today || 0) +
+                    (data.membership_fees?.revenue_today || 0) +
+                    (data.walkins?.revenue_today || 0)  
+                  )}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Walk-ins: {formatCurrency(data.walkins?.revenue_today || 0)}
+                </p>
+              </div>
+              <div className="h-12 w-12 rounded-full bg-yellow-600/20 flex items-center justify-center">
+                <DollarSign className="text-yellow-400" size={24} />
+              </div>
             </div>
           </div>
         </div>

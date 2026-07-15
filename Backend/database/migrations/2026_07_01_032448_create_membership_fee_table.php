@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('members_id')->constrained('members')->onDelete('cascade');
             $table->foreignId('membership_id')->constrained('membership_pricing')->onDelete('cascade');
             $table->enum('payment_type', ['cash', 'gcash']);
+            $table->decimal('total_amount', 10, 2)->nullable();
             $table->decimal('payment_amount', 10, 2)->nullable();
             $table->string('or_number')->nullable();
             $table->string('transaction_id')->nullable();

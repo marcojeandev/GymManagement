@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('contract_to');
             $table->enum('payment_type', ['cash', 'gcash']);
             $table->decimal('payment_amount', 10, 2)->nullable();
+            $table->decimal('total_amount', 10, 2)->nullable();
             $table->string('or_number')->nullable();
             $table->string('transaction_id')->nullable();
             $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending');
