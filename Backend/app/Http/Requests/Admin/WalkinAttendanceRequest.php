@@ -19,6 +19,7 @@ class WalkinAttendanceRequest extends FormRequest
             'members_id' => ['nullable', 'exists:members,id'],
             'time_in' => ['required', 'date'],
             'fee_paid' => ['required', 'numeric', 'min:0'],
+            'total_amount' => ['required', 'numeric', 'min:0'],
         ];
 
         // Ensure at least one of walk_in_id or members_id is provided

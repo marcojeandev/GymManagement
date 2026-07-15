@@ -21,6 +21,7 @@ class SalesRequest extends FormRequest
             'transaction_id' => ['nullable', 'string', 'max:255', 'required_if:payment_type,gcash'],
             'payment_status' => ['required', Rule::in(['pending', 'paid', 'failed'])],
             'payment_amount' => ['nullable', 'numeric', 'min:0'],
+            'total_amount' => ['required', 'numeric', 'min:0'],
             'products' => ['required', 'array'],
             'products.*.product_id' => ['required', 'exists:products,id'],
             'products.*.quantity' => ['required', 'integer', 'min:1'],

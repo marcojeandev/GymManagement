@@ -23,6 +23,7 @@ export interface MembershipFee {
   membership_id: number;
   payment_type: 'cash' | 'gcash';
   payment_amount: number | null;
+  total_amount: number | null;
   or_number: string | null;
   transaction_id: string | null;
   payment_status: 'pending' | 'paid' | 'failed';
@@ -51,6 +52,7 @@ export interface MemberFormData {
   membership_id: number | '';
   payment_type: 'cash' | 'gcash';
   payment_amount: number | '';
+  total_amount: number | '';
   or_number: string;
   transaction_id: string;
   payment_status: 'pending' | 'paid' | 'failed';

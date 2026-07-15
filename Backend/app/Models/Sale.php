@@ -17,13 +17,15 @@ class Sale extends Model
         'or_number',
         'transaction_id',
         'payment_status',
-        'payment_amount', // customer's tendered amount
+        'payment_amount',
+        ''
     ];
 
     protected $casts = [
         'payment_status' => 'string',
         'payment_type' => 'string',
         'payment_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
     ];
 
     public function products()

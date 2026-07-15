@@ -26,6 +26,7 @@ const initialForm: MemberFormData = {
   membership_id: '',
   payment_type: 'cash',
   payment_amount: '',
+  total_amount: '',
   or_number: '',
   transaction_id: '',
   payment_status: 'pending',
@@ -48,6 +49,7 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
+  // Load pricing when modal opens
   useEffect(() => {
     if (isOpen) {
       loadPricing();
@@ -67,6 +69,20 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  // Auto-calculate total_amount when pricing or payment_amount changes
+  useEffect(() => {
+    const price = pricing?.price ?? 0;
+    const paymentAmount = parseFloat(form.payment_amount) || 0;
+    const total = price + paymentAmount;
+    const totalAmount = total > 0 ? String(total.toFixed(2)) : '';
+
+    setForm((prev) => ({
+      ...prev,
+      total_amount: totalAmount,
+    }));
+  }, [pricing, form.payment_amount]);
+
+  // Handle camera video play
   useEffect(() => {
     if (cameraOpen && stream && videoRef.current) {
       const video = videoRef.current;
@@ -90,8 +106,12 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
     try {
       const data = await systemSettingsApi.getMembershipPrice();
       setPricing(data);
-      if (data) {
-        setForm((prev) => ({ ...prev, membership_id: data.id }));
+      if (data && data.id) {
+        setForm((prev) => ({
+          ...prev,
+          membership_id: data.id,
+          total_amount: data.price ? String(data.price) : '',
+        }));
       }
     } catch (error) {
       toast.error('Failed to load membership plan');
@@ -200,6 +220,7 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
         'membership_id',
         'payment_type',
         'payment_amount',
+        'total_amount',
         'or_number',
         'transaction_id',
         'payment_status',
@@ -388,22 +409,43 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
           <hr className="border-gray-700" />
 
           <h3 className="text-lg font-semibold text-white">Membership Fee</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300">Membership Plan *</label>
-              <input type="hidden" name="membership_id" value={form.membership_id} />
+              <label className="block text-sm font-medium text-gray-300">Price</label>
               <div className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white">
-                {pricing ? `(₱${pricing.price} / Permanent)` : 'No plan set'}
+                ₱{pricing?.price ?? '—'}
               </div>
               {!pricing && <p className="text-xs text-yellow-500 mt-1">No membership plan set.</p>}
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-300">Price</label>
-              <div className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-gray-400 cursor-not-allowed">
-                ₱{pricing?.price ?? '—'}
-              </div>
+              <label className="block text-sm font-medium text-gray-300">Payment Amount</label>
+              <input
+                type="number"
+                step="0.01"
+                name="payment_amount"
+                value={form.payment_amount}
+                onChange={handleChange}
+                placeholder="0.00"
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300">Total Amount</label>
+              <input
+                type="text"
+                name="total_amount"
+                value={form.total_amount || ''}
+                readOnly
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-green-400 font-semibold cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-500 mt-1">Price + Payment Amount</p>
             </div>
           </div>
+
+          <input type="hidden" name="membership_id" value={form.membership_id} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -420,15 +462,18 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300">Payment Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                name="payment_amount"
-                value={form.payment_amount}
+              <label className="block text-sm font-medium text-gray-300">Payment Status *</label>
+              <select
+                name="payment_status"
+                required
+                value={form.payment_status}
                 onChange={handleChange}
                 className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-              />
+              >
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="failed">Failed</option>
+              </select>
             </div>
           </div>
 
@@ -458,35 +503,18 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300">Payment Status *</label>
-              <select
-                name="payment_status"
-                required
-                value={form.payment_status}
-                onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-              >
-                <option value="pending">Pending</option>
-                <option value="paid">Paid</option>
-                <option value="failed">Failed</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300">Paid At</label>
-              <input
-                type="datetime-local"
-                name="paid_at"
-                value={form.paid_at}
-                onChange={handleChange}
-                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
-              />
-              <p className="text-xs text-gray-500 mt-1">Auto-set to current time</p>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Paid At</label>
+            <input
+              type="datetime-local"
+              name="paid_at"
+              value={form.paid_at}
+              onChange={handleChange}
+              className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
+            />
+            <p className="text-xs text-gray-500 mt-1">Auto-set to current time</p>
           </div>
 
-          {/* Profile Photo */}
           <div>
             <label className="block text-sm font-medium text-gray-300">Profile Photo</label>
             <div className="mt-2">

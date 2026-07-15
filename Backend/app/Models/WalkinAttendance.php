@@ -16,11 +16,13 @@ class WalkinAttendance extends Model
         'members_id',      // new
         'time_in',
         'fee_paid',
+        'total_amount',
     ];
 
     protected $casts = [
         'time_in' => 'datetime',
         'fee_paid' => 'decimal:2',
+        'total_amount' => 'decimal:2',
     ];
 
     // Relationship to WalkinInfo

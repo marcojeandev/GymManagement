@@ -25,6 +25,7 @@ class Contract extends Model
 
     protected $casts = [
         'payment_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'contract_from' => 'date',
         'contract_to' => 'date',
