@@ -74,6 +74,8 @@ class ContractController extends Controller
             return response()->json(['status' => 0, 'message' => 'Contract pricing not found.'], 404);
         }
 
+        $validated['total_amount'] = $pricing->price;
+
         // Date logic: use provided or default
         $from = $request->filled('contract_from')
             ? Carbon::parse($validated['contract_from'])

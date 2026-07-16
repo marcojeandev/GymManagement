@@ -261,6 +261,7 @@ class MembersController extends Controller
                 'membership_id'   => $validated['membership_id'],
                 'payment_type'    => $validated['payment_type'] ?? 'cash',
                 'payment_amount'  => $validated['payment_amount'] ?? null,
+                'total_amount'  => $validated['total_amount'] ?? null,
                 'or_number'       => $validated['or_number'] ?? null,
                 'transaction_id'  => $validated['transaction_id'] ?? null,
                 'payment_status'  => $validated['payment_status'] ?? 'pending',

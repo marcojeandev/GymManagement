@@ -27,6 +27,7 @@ class MembershipFee extends Model
 
     protected $casts = [
         'payment_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'payment_status' => 'string',
         'payment_type' => 'string',

@@ -13,6 +13,9 @@ interface CreateWalkinAttendanceModalProps {
   onSuccess: () => void;
 }
 
+// ✅ Walk-in fee (you can change this or fetch from settings)
+const WALKIN_FEE = 100;
+
 export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: CreateWalkinAttendanceModalProps) => {
   const [form, setForm] = useState({
     type: 'walkin' as 'walkin' | 'member',
@@ -20,6 +23,7 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
     members_id: '',
     time_in: '',
     fee_paid: '',
+    payment_amount: '', // ✅ Added payment amount
   });
   const [loading, setLoading] = useState(false);
   const [walkins, setWalkins] = useState<WalkinInfo[]>([]);
@@ -69,6 +73,14 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
     }));
   };
 
+  // ✅ Calculate change (frontend only)
+  const calculateChange = () => {
+    const total = WALKIN_FEE; // Walk-in fee is fixed
+    const payment = Number(form.payment_amount) || 0;
+    const change = payment - total;
+    return change > 0 ? change.toFixed(2) : '0.00';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -104,6 +116,7 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
       members_id: '',
       time_in: '',
       fee_paid: '',
+      payment_amount: '',
     });
     onClose();
   };
@@ -206,19 +219,42 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
             />
           </div>
 
+          {/* ✅ PRICE (Total Amount) - Display Only */}
           <div>
-            <label className="block text-sm font-medium text-gray-300">Fee Paid (₱) *</label>
+            <label className="block text-sm font-medium text-gray-300">Total Amount (Price)</label>
+            <div className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white">
+              ₱{WALKIN_FEE.toFixed(2)}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Walk-in fee (fixed)</p>
+          </div>
+
+          {/* ✅ PAYMENT AMOUNT - Input */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Payment Amount</label>
             <input
               type="number"
               step="0.01"
-              name="fee_paid"
-              required
-              min="0"
-              value={form.fee_paid}
+              name="payment_amount"
+              value={form.payment_amount}
               onChange={handleChange}
+              placeholder="0.00"
+              min="0"
               className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-red-500 transition"
             />
+            <p className="text-xs text-gray-500 mt-1">Amount paid by customer</p>
           </div>
+
+          {/* ✅ CHANGE - Display Only */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300">Change</label>
+            <div className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-green-400 font-semibold">
+              ₱{calculateChange()}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Payment Amount - Total Amount</p>
+          </div>
+
+          {/* ✅ FEE PAID (hidden or kept for backend) */}
+          <input type="hidden" name="fee_paid" value={form.fee_paid} />
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-700/30">
             <button

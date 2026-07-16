@@ -29,6 +29,7 @@ class ContractRequest extends FormRequest
             'contract_to' => ['nullable', 'date', 'after:contract_from'],
             'payment_type' => ['required', Rule::in(['cash', 'gcash'])],
             'payment_amount' => ['nullable', 'numeric', 'min:0'],
+            'total_amount' => ['nullable', 'numeric', 'min:0'],
             'or_number' => ['nullable', 'string', 'max:255'],
             'transaction_id' => ['nullable', 'string', 'max:255'],
             'payment_status' => ['required', Rule::in(['pending', 'paid', 'failed'])],

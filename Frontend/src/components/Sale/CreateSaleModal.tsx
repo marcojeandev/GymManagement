@@ -23,7 +23,8 @@ const initialForm = {
   or_number: '',
   transaction_id: '',
   payment_status: 'paid' as 'pending' | 'paid' | 'failed',
-  payment_amount: '', // always a string to avoid uncontrolled/controlled warning
+  payment_amount: '', 
+  total_amount: '', 
   products: [] as LineItem[],
 };
 
@@ -234,9 +235,14 @@ export const CreateSaleModal = ({ isOpen, onClose, onSuccess }: CreateSaleModalP
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300">Total</label>
-              <div className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-gray-400 cursor-not-allowed">
-                ₱{totalAmount.toFixed(2)}
-              </div>
+              <input
+                type="number"
+                step="0.01"
+                name="total_amount"
+                value={form.total_amount || totalAmount.toFixed(2)}
+                readOnly
+                className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-gray-400 cursor-not-allowed"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300">Change</label>

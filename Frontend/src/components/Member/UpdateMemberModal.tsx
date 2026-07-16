@@ -39,6 +39,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
         membership_id: fee?.membership_id || '',
         payment_type: fee?.payment_type || 'cash',
         payment_amount: fee?.payment_amount || '',
+        total_amount: fee?.total_amount || '',
         or_number: fee?.or_number || '',
         transaction_id: fee?.transaction_id || '',
         payment_status: fee?.payment_status || 'pending',
@@ -85,7 +86,7 @@ export const UpdateMemberModal = ({ isOpen, onClose, onSuccess, member }: Update
       const fields: (keyof MemberFormData)[] = [
         'firstname', 'middlename', 'lastname', 'suffix', 'email', 'contact',
         'address', 'sex', 'membership_status', 'contract_status',
-        'membership_id', 'payment_type', 'payment_amount', 'or_number',
+        'membership_id', 'payment_type', 'payment_amount', 'total_amount', 'or_number',
         'transaction_id', 'payment_status', 'paid_at',
       ];
       for (const key of fields) {

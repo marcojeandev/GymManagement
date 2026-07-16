@@ -53,6 +53,7 @@ class MembersRequest extends FormRequest
             'membership_id' => ['nullable', 'integer', 'exists:membership_pricing,id'],
             'payment_type' => ['nullable', Rule::in(['cash', 'gcash'])],
             'payment_amount' => ['nullable', 'numeric', 'min:0'],
+            'total_amount' => ['nullable', 'numeric', 'min:0'],
             'or_number' => ['nullable', 'string', 'max:50'],
             'transaction_id' => ['nullable', 'string', 'max:100'],
             'payment_status' => ['nullable', Rule::in(['pending', 'paid', 'failed'])],

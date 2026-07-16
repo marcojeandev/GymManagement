@@ -411,7 +411,7 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300">Price</label>
+              <label className="block text-sm font-medium text-gray-300">Price (Total Amount)</label>
               <div className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white">
                 ₱{pricing?.price ?? '—'}
               </div>
@@ -432,17 +432,17 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300">Total Amount</label>
-              <input
-                type="text"
-                value={
-                  form.total_amount === ''
-                    ? ''
-                    : Number(form.total_amount).toFixed(2)
-                }
-                readOnly
-              />
-              <p className="text-xs text-gray-500 mt-1">Price + Payment Amount</p>
+              <label className="block text-sm font-medium text-gray-300">Change</label>
+              <div className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-green-400 font-semibold">
+                ₱
+                {(() => {
+                  const total = Number(pricing?.price) || 0;
+                  const payment = Number(form.payment_amount) || 0;
+                  const change = payment - total;
+                  return change > 0 ? change.toFixed(2) : '0.00';
+                })()}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Payment Amount - Total Amount</p>
             </div>
           </div>
 
@@ -620,7 +620,7 @@ export const CreateMemberModal = ({ isOpen, onClose, onSuccess }: CreateMemberMo
               onClick={handleClose}
               className="px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-700/30 rounded-lg transition"
             >
-              Cancel
+             Cancel
             </button>
             <button
               type="submit"
