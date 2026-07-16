@@ -60,6 +60,12 @@ class SalesController extends Controller
         $products = $validated['products'];
         unset($validated['products']);
 
+        // Compute total amount from the product list
+        $totalAmount = array_sum(array_map(function ($item) {
+            return $item['quantity'] * $item['price_at_sale'];
+        }, $products));
+        $validated['total_amount'] = $totalAmount;
+
         if (!isset($validated['payment_amount'])) {
             $validated['payment_amount'] = null;
         }
@@ -110,6 +116,12 @@ class SalesController extends Controller
         $validated = $request->validated();
         $products = $validated['products'] ?? [];
         unset($validated['products']);
+
+        // Compute total amount from the product list
+        $totalAmount = array_sum(array_map(function ($item) {
+            return $item['quantity'] * $item['price_at_sale'];
+        }, $products));
+        $validated['total_amount'] = $totalAmount;
 
         if (!isset($validated['payment_amount'])) {
             $validated['payment_amount'] = null;

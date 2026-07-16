@@ -52,56 +52,59 @@ class SalesController extends Controller
         ]);
     }
 
-    public function store(SalesRequest $request)
-    {
-        $this->authorize('create', Sale::class);
+public function store(SalesRequest $request)
+{
+    $this->authorize('create', Sale::class);
 
-        $validated = $request->validated();
-        $products = $validated['products'];
-        unset($validated['products']);
+    $validated = $request->validated();
+    $products = $validated['products'];
+    unset($validated['products']);
 
-        if (!isset($validated['payment_amount'])) {
-            $validated['payment_amount'] = null;
-        }
+    // Compute total amount from the product list
+    $totalAmount = array_sum(array_map(function ($item) {
+        return $item['quantity'] * $item['price_at_sale'];
+    }, $products));
+    $validated['total_amount'] = $totalAmount;
 
-        DB::beginTransaction();
-        try {
-            // Create the sale
-            $sale = Sale::create($validated);
-
-            // Attach products and adjust stock
-            foreach ($products as $item) {
-                // Create product_sold record
-                ProductSold::create([
-                    'sales_id' => $sale->id,
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'price_at_sale' => $item['price_at_sale'],
-                ]);
-
-                // Update product stock
-                $product = Product::find($item['product_id']);
-                if ($product) {
-                    $product->quantity -= $item['quantity'];
-                    $product->sold += $item['quantity'];
-                    $product->save();
-                }
-            }
-
-            DB::commit();
-            return response()->json([
-                'status' => 1,
-                'message' => 'Sale created successfully.',
-                'data' => $sale->load('productSold.product'),
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'status' => 0,
-                'message' => 'Creation failed: ' . $e->getMessage(),
-            ], 500);
-        }
+    // If payment_amount is not provided, set null
+    if (!isset($validated['payment_amount'])) {
+        $validated['payment_amount'] = null;
     }
+
+    DB::beginTransaction();
+    try {
+        $sale = Sale::create($validated);
+
+        foreach ($products as $item) {
+            ProductSold::create([
+                'sales_id' => $sale->id,
+                'product_id' => $item['product_id'],
+                'quantity' => $item['quantity'],
+                'price_at_sale' => $item['price_at_sale'],
+            ]);
+
+            $product = Product::find($item['product_id']);
+            if ($product) {
+                $product->quantity -= $item['quantity'];
+                $product->sold += $item['quantity'];
+                $product->save();
+            }
+        }
+
+        DB::commit();
+        return response()->json([
+            'status' => 1,
+            'message' => 'Sale created successfully.',
+            'data' => $sale->load('productSold.product'),
+        ], 201);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'status' => 0,
+            'message' => 'Creation failed: ' . $e->getMessage(),
+        ], 500);
+    }
+}
 
     public function update(SalesRequest $request, Sale $sale)
     {
@@ -110,6 +113,12 @@ class SalesController extends Controller
         $validated = $request->validated();
         $products = $validated['products'] ?? [];
         unset($validated['products']);
+
+        // Compute total amount from the product list
+        $totalAmount = array_sum(array_map(function ($item) {
+            return $item['quantity'] * $item['price_at_sale'];
+        }, $products));
+        $validated['total_amount'] = $totalAmount;
 
         if (!isset($validated['payment_amount'])) {
             $validated['payment_amount'] = null;

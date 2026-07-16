@@ -18,7 +18,7 @@ class Sale extends Model
         'transaction_id',
         'payment_status',
         'payment_amount',
-        ''
+        'total_amount'
     ];
 
     protected $casts = [

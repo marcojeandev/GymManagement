@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CashierLayout } from '../../layouts/CashierLayout';
-import { dashboardApi } from '../../services/cashier/dashboardApi';
+import { dashboardApi } from '../../services/admin/dashboardApi';
 import toast from 'react-hot-toast';
 import {
   Users,
@@ -63,29 +63,27 @@ export const CashierDashboard = () => {
 
       setData(safeData);
 
-      // ✅ BUILD CHART DATA - FIXED
+      // BUILD CHART DATA
       if (trend && trend.labels && Array.isArray(trend.labels) && trend.labels.length > 0) {
         const chartData = trend.labels.map((label: string, i: number) => ({
           day: label,
-          // ✅ Use actual sales data from the database
           sales: trend.breakdown?.sales?.[i] ?? 0,
           contracts: trend.breakdown?.contracts?.[i] ?? 0,
           membership: trend.breakdown?.membership_fees?.[i] ?? 0,
           total: trend.values?.[i] ?? 0,
         }));
         
-        console.log('📊 Chart Data:', chartData); // Debug log
+        console.log('📊 Chart Data:', chartData);
         setTrendData(chartData);
       } else {
-        // ✅ If no trend data, create default with zeros
-        const defaultLabels = [];
+        // If no trend data, create default with zeros
         const defaultData = [];
         for (let i = 6; i >= 0; i--) {
           const date = new Date();
           date.setDate(date.getDate() - i);
-          defaultLabels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+          const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           defaultData.push({ 
-            day: defaultLabels[defaultLabels.length - 1], 
+            day: label, 
             sales: 0, 
             contracts: 0, 
             membership: 0, 
@@ -108,7 +106,7 @@ export const CashierDashboard = () => {
     return `₱${num.toFixed(2)}`;
   };
 
-  // ✅ Calculate totals for the chart display
+  // Calculate totals for the chart display
   const totalChartRevenue = trendData.reduce((sum, d) => sum + d.total, 0);
   const totalChartSales = trendData.reduce((sum, d) => sum + d.sales, 0);
   const totalChartContracts = trendData.reduce((sum, d) => sum + d.contracts, 0);
@@ -134,9 +132,17 @@ export const CashierDashboard = () => {
     );
   }
 
+  // Calculate revenue totals - all now use total_amount from backend
   const totalMonthlyRevenue = data.sales?.total_this_month || 0;
   const totalTodayRevenue = data.sales?.total_today || 0;
   const totalLastWeekRevenue = data.sales?.total_last_week || 0;
+  
+  // Calculate today's revenue including all sources
+  const todayTotalRevenue = 
+    (data.sales?.today || 0) +
+    (data.contracts?.revenue_today || 0) +
+    (data.membership_fees?.revenue_today || 0) +
+    (data.walkins?.revenue_today || 0);
 
   return (
     <CashierLayout>
@@ -224,6 +230,7 @@ export const CashierDashboard = () => {
               Product Sales
             </p>
             <p className="text-xl font-bold text-white">{formatCurrency(data.sales?.this_month || 0)}</p>
+            <p className="text-xs text-gray-500 mt-1">Using total_amount</p>
           </div>
           <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-4 shadow-xl shadow-red-500/5">
             <p className="text-gray-400 text-sm flex items-center gap-2">
@@ -231,6 +238,7 @@ export const CashierDashboard = () => {
               Contract Revenue
             </p>
             <p className="text-xl font-bold text-white">{formatCurrency(data.contracts?.revenue_this_month || 0)}</p>
+            <p className="text-xs text-gray-500 mt-1">Using total_amount</p>
           </div>
           <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-4 shadow-xl shadow-red-500/5">
             <p className="text-gray-400 text-sm flex items-center gap-2">
@@ -238,6 +246,7 @@ export const CashierDashboard = () => {
               Membership Fees
             </p>
             <p className="text-xl font-bold text-white">{formatCurrency(data.membership_fees?.revenue_this_month || 0)}</p>
+            <p className="text-xs text-gray-500 mt-1">Using total_amount</p>
           </div>
         </div>
 
@@ -254,7 +263,7 @@ export const CashierDashboard = () => {
                 Total: {formatCurrency(totalChartRevenue)}
               </span>
             </div>
-            {trendData.length > 0 ? (
+            {trendData.length > 0 && trendData.some(d => d.total > 0) ? (
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={trendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -263,10 +272,10 @@ export const CashierDashboard = () => {
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1e242c', border: '1px solid #374151' }}
                     formatter={(value: any, name: string) => {
-                      if (name === 'sales') return [`₱${value.toFixed(2)}`, 'Product Sales'];
-                      if (name === 'contracts') return [`₱${value.toFixed(2)}`, 'Contracts'];
-                      if (name === 'membership') return [`₱${value.toFixed(2)}`, 'Membership Fees'];
-                      return [`₱${value.toFixed(2)}`, name];
+                      if (name === 'sales') return [`₱${Number(value).toFixed(2)}`, 'Product Sales'];
+                      if (name === 'contracts') return [`₱${Number(value).toFixed(2)}`, 'Contracts'];
+                      if (name === 'membership') return [`₱${Number(value).toFixed(2)}`, 'Membership Fees'];
+                      return [`₱${Number(value).toFixed(2)}`, name];
                     }}
                   />
                   <Legend />
@@ -348,12 +357,7 @@ export const CashierDashboard = () => {
               <div>
                 <p className="text-gray-400 text-sm">Revenue Today</p>
                 <p className="text-2xl font-bold text-white">
-                  {formatCurrency(
-                    (data.sales?.today || 0) +
-                    (data.contracts?.revenue_today || 0) +
-                    (data.membership_fees?.revenue_today || 0) +
-                    (data.walkins?.revenue_today || 0)  
-                  )}
+                  {formatCurrency(todayTotalRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   Walk-ins: {formatCurrency(data.walkins?.revenue_today || 0)}

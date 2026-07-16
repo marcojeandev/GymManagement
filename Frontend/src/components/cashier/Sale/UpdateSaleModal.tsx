@@ -113,6 +113,7 @@ export const UpdateSaleModal = ({ isOpen, onClose, onSuccess, sale }: UpdateSale
           formData.append(key, String(val));
         }
       }
+      formData.append('total_amount', totalAmount.toFixed(2));
       form.products.forEach((item: any, index: number) => {
         formData.append(`products[${index}][product_id]`, String(item.product_id));
         formData.append(`products[${index}][quantity]`, String(item.quantity));

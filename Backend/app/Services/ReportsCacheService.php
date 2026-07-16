@@ -23,21 +23,23 @@ class ReportsCacheService
             $thisMonth = Carbon::now()->startOfMonth();
             $thisYear = Carbon::now()->startOfYear();
 
-            $salesRevenue = Sale::where('created_at', '>=', $thisMonth)->sum('payment_amount');
+            // Changed to total_amount
+            $salesRevenue = Sale::where('created_at', '>=', $thisMonth)->sum('total_amount');
             $contractRevenue = Contract::where('created_at', '>=', $thisMonth)
                 ->where('payment_status', 'paid')
-                ->sum('payment_amount');
+                ->sum('total_amount');
             $membershipRevenue = MembershipFee::where('created_at', '>=', $thisMonth)
                 ->where('payment_status', 'paid')
-                ->sum('payment_amount');
+                ->sum('total_amount');
 
-            $salesToday = Sale::whereDate('created_at', $today)->sum('payment_amount');
+            // Changed to total_amount
+            $salesToday = Sale::whereDate('created_at', $today)->sum('total_amount');
             $contractToday = Contract::whereDate('created_at', $today)
                 ->where('payment_status', 'paid')
-                ->sum('payment_amount');
+                ->sum('total_amount');
             $membershipToday = MembershipFee::whereDate('created_at', $today)
                 ->where('payment_status', 'paid')
-                ->sum('payment_amount');
+                ->sum('total_amount');
 
             return [
                 'members' => [
@@ -51,7 +53,7 @@ class ReportsCacheService
                 'sales' => [
                     'today' => (float) ($salesToday + $contractToday + $membershipToday),
                     'this_month' => (float) ($salesRevenue + $contractRevenue + $membershipRevenue),
-                    'this_year' => (float) Sale::where('created_at', '>=', $thisYear)->sum('payment_amount'),
+                    'this_year' => (float) Sale::where('created_at', '>=', $thisYear)->sum('total_amount'), // Changed
                     'breakdown' => [
                         'sales' => (float) $salesRevenue,
                         'contracts' => (float) $contractRevenue,
@@ -91,7 +93,7 @@ class ReportsCacheService
             $labels = [];
             $values = [];
             
-            // ✅ Fill all months with zero if no data
+            // Fill all months with zero if no data
             for ($i = $months - 1; $i >= 0; $i--) {
                 $date = Carbon::now()->subMonths($i);
                 $monthKey = $date->format('Y-m');
@@ -124,19 +126,20 @@ class ReportsCacheService
         return Cache::remember($cacheKey, $this->ttl, function () use ($days) {
             $startDate = Carbon::now()->subDays($days)->startOfDay();
 
-            // Get combined sales from all sources
+            // Changed to total_amount
             $salesData = Sale::select(
                 DB::raw('DATE(created_at) as date'),
-                DB::raw('COALESCE(SUM(payment_amount), 0) as total')
+                DB::raw('COALESCE(SUM(total_amount), 0) as total')
             )
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')
             ->get()
             ->keyBy('date');
 
+            // Changed to total_amount
             $contractData = Contract::select(
                 DB::raw('DATE(created_at) as date'),
-                DB::raw('COALESCE(SUM(payment_amount), 0) as total')
+                DB::raw('COALESCE(SUM(total_amount), 0) as total')
             )
             ->whereDate('created_at', '>=', $startDate)
             ->where('payment_status', 'paid')
@@ -144,9 +147,10 @@ class ReportsCacheService
             ->get()
             ->keyBy('date');
 
+            // Changed to total_amount
             $membershipData = MembershipFee::select(
                 DB::raw('DATE(created_at) as date'),
-                DB::raw('COALESCE(SUM(payment_amount), 0) as total')
+                DB::raw('COALESCE(SUM(total_amount), 0) as total')
             )
             ->whereDate('created_at', '>=', $startDate)
             ->where('payment_status', 'paid')
@@ -191,7 +195,7 @@ class ReportsCacheService
                 ->limit($limit)
                 ->get();
 
-            // ✅ Return as array of objects with proper keys
+            // Return as array of objects with proper keys
             return $products->map(function ($item) {
                 return [
                     'name' => $item->name,
@@ -233,15 +237,16 @@ class ReportsCacheService
     public function getSalesByPaymentType()
     {
         return Cache::remember('reports_sales_by_payment', $this->ttl, function () {
+            // Changed to total_amount
             $sales = Sale::select(
                 'payment_type',
                 DB::raw('COUNT(*) as count'),
-                DB::raw('COALESCE(SUM(payment_amount), 0) as total')
+                DB::raw('COALESCE(SUM(total_amount), 0) as total')
             )
             ->groupBy('payment_type')
             ->get();
 
-            // ✅ Ensure both cash and gcash are always present
+            // Ensure both cash and gcash are always present
             $result = [];
             $paymentTypes = ['cash', 'gcash'];
             
@@ -265,7 +270,7 @@ class ReportsCacheService
                 ->groupBy('membership_status')
                 ->get();
 
-            // ✅ Ensure all statuses are present
+            // Ensure all statuses are present
             $statuses = ['active', 'expired', 'pending'];
             $result = [];
             
@@ -286,7 +291,7 @@ class ReportsCacheService
         return Cache::remember('reports_contract_distribution', $this->ttl, function () {
             $today = Carbon::today();
             
-            // ✅ Get all contracts with status
+            // Get all contracts with status
             $active = Contract::where('contract_to', '>=', $today)->count();
             $expired = Contract::where('contract_to', '<', $today)->count();
 
@@ -320,19 +325,22 @@ class ReportsCacheService
     {
         $cacheKey = "reports_revenue_breakdown_{$start}_{$end}";
         return Cache::remember($cacheKey, $this->ttl, function () use ($start, $end) {
+            // Changed to total_amount
             $salesRevenue = Sale::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
-                ->sum('payment_amount');
+                ->sum('total_amount');
 
+            // Changed to total_amount
             $contractRevenue = Contract::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->where('payment_status', 'paid')
-                ->sum('payment_amount');
+                ->sum('total_amount');
 
+            // Changed to total_amount
             $membershipRevenue = MembershipFee::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->where('payment_status', 'paid')
-                ->sum('payment_amount');
+                ->sum('total_amount');
 
             return [
                 'total_revenue' => (float) ($salesRevenue + $contractRevenue + $membershipRevenue),
@@ -350,19 +358,22 @@ class ReportsCacheService
     {
         $cacheKey = "reports_all_revenue_{$start}_{$end}";
         return Cache::remember($cacheKey, $this->ttl, function () use ($start, $end) {
+            // Changed to total_amount
             $salesRevenue = Sale::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
-                ->sum('payment_amount');
+                ->sum('total_amount');
 
+            // Changed to total_amount
             $contractRevenue = Contract::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->where('payment_status', 'paid')
-                ->sum('payment_amount');
+                ->sum('total_amount');
 
+            // Changed to total_amount
             $membershipRevenue = MembershipFee::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->where('payment_status', 'paid')
-                ->sum('payment_amount');
+                ->sum('total_amount');
 
             return [
                 'sales' => (float) $salesRevenue,

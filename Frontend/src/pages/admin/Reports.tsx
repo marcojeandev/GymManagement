@@ -151,8 +151,8 @@ export const ReportsPage = () => {
     csv += `Attendance (Today),${overview?.attendance?.today || 0}\n`;
     csv += `Total Walk-ins,${overview?.walkins?.total || 0}\n`;
     csv += `Walk-ins (Today),${overview?.walkins?.today || 0}\n`;
-    csv += `Walk-in Revenue (Today),${formatCurrency(overview?.walkins?.today_revenue || 0)}\n`;
-    csv += `Walk-in Revenue (Month),${formatCurrency(overview?.walkins?.this_month_revenue || 0)}\n\n`;
+    csv += `Walk-in Revenue (Today),${formatCurrency(overview?.walkins?.revenue_today || 0)}\n`;
+    csv += `Walk-in Revenue (Month),${formatCurrency(overview?.walkins?.revenue_this_month || 0)}\n\n`;
 
     csv += 'SALES TREND (Daily)\n';
     csv += 'Day,Sales (₱)\n';
@@ -385,8 +385,8 @@ export const ReportsPage = () => {
             </div>
           </div>
 
-          {/* Walk-in Revenue Card */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {/* Walk-in Revenue Cards - FIXED field names */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             <div className="bg-[#14181f] rounded-2xl border border-purple-700/50 p-5 shadow-xl shadow-purple-500/5 print-card">
               <div className="flex items-center justify-between">
                 <div>
@@ -404,7 +404,7 @@ export const ReportsPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-sm">Walk-in Revenue (Today)</p>
-                  <p className="text-2xl font-bold text-white">{formatCurrency(overview?.walkins?.today_revenue || 0)}</p>
+                  <p className="text-2xl font-bold text-white">{formatCurrency(overview?.walkins?.revenue_today || 0)}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-orange-600/20 flex items-center justify-center">
                   <DollarSign className="text-orange-400" size={24} />
@@ -416,7 +416,7 @@ export const ReportsPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-sm">Walk-in Revenue (Month)</p>
-                  <p className="text-2xl font-bold text-white">{formatCurrency(overview?.walkins?.this_month_revenue || 0)}</p>
+                  <p className="text-2xl font-bold text-white">{formatCurrency(overview?.walkins?.revenue_this_month || 0)}</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-orange-600/20 flex items-center justify-center">
                   <TrendingUp className="text-orange-400" size={24} />
