@@ -13,8 +13,9 @@ interface CreateWalkinAttendanceModalProps {
   onSuccess: () => void;
 }
 
-// ✅ Walk-in fee (you can change this or fetch from settings)
+// ✅ Walk-in fee (can be fetched from settings later)
 const WALKIN_FEE = 100;
+const MEMBER_FEE = 80; // Example member fee
 
 export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: CreateWalkinAttendanceModalProps) => {
   const [form, setForm] = useState({
@@ -22,8 +23,8 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
     walk_in_id: '',
     members_id: '',
     time_in: '',
+    total_amount: String(WALKIN_FEE), // Only declared once
     fee_paid: '',
-    payment_amount: '', // ✅ Added payment amount
   });
   const [loading, setLoading] = useState(false);
   const [walkins, setWalkins] = useState<WalkinInfo[]>([]);
@@ -37,7 +38,12 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
       const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
         .toISOString()
         .slice(0, 16);
-      setForm((prev) => ({ ...prev, time_in: localTime }));
+      setForm((prev) => ({
+        ...prev,
+        time_in: localTime,
+        // ✅ Only set total_amount once based on type
+        total_amount: prev.type === 'walkin' ? String(WALKIN_FEE) : String(MEMBER_FEE),
+      }));
     }
   }, [isOpen]);
 
@@ -70,15 +76,16 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
       type,
       walk_in_id: '',
       members_id: '',
+      total_amount: type === 'walkin' ? String(WALKIN_FEE) : String(MEMBER_FEE),
+      fee_paid: '', // reset payment when switching type
     }));
   };
 
   // ✅ Calculate change (frontend only)
   const calculateChange = () => {
-    const total = WALKIN_FEE; // Walk-in fee is fixed
-    const payment = Number(form.payment_amount) || 0;
-    const change = payment - total;
-    return change > 0 ? change.toFixed(2) : '0.00';
+    const total = Number(form.total_amount) || 0;
+    const payment = Number(form.fee_paid) || 0;
+    return Math.max(payment - total, 0).toFixed(2);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,18 +93,20 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
     setLoading(true);
     try {
       const formData = new FormData();
-      const fields = ['time_in', 'fee_paid'];
-      for (const key of fields) {
-        const val = form[key as keyof typeof form];
-        if (val !== undefined && val !== null && val !== '') {
-          formData.append(key, String(val));
-        }
-      }
+      
+      // ✅ Append all required fields
+      formData.append('time_in', form.time_in);
+      formData.append('fee_paid', String(form.fee_paid));
+      
+      // ✅ Add total_amount as number (for database)
+      formData.append('total_amount', String(form.total_amount));
+
       if (form.type === 'walkin') {
         formData.append('walk_in_id', String(form.walk_in_id));
       } else {
         formData.append('members_id', String(form.members_id));
       }
+
       await walkinAttendanceApi.createAttendance(formData);
       toast.success('Attendance recorded');
       onSuccess();
@@ -115,8 +124,8 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
       walk_in_id: '',
       members_id: '',
       time_in: '',
+      total_amount: String(WALKIN_FEE),
       fee_paid: '',
-      payment_amount: '',
     });
     onClose();
   };
@@ -222,20 +231,24 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
           {/* ✅ PRICE (Total Amount) - Display Only */}
           <div>
             <label className="block text-sm font-medium text-gray-300">Total Amount (Price)</label>
-            <div className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white">
-              ₱{WALKIN_FEE.toFixed(2)}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Walk-in fee (fixed)</p>
+            <input
+              type="number"
+              name="total_amount"
+              value={form.total_amount}
+              readOnly
+              className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-white"
+            />
+            <p className="text-xs text-gray-500 mt-1">Fee is fixed based on type</p>
           </div>
 
-          {/* ✅ PAYMENT AMOUNT - Input */}
+          {/* ✅ PAYMENT AMOUNT - Input (fixed name) */}
           <div>
             <label className="block text-sm font-medium text-gray-300">Payment Amount</label>
             <input
               type="number"
               step="0.01"
-              name="payment_amount"
-              value={form.payment_amount}
+              name="fee_paid"
+              value={form.fee_paid}
               onChange={handleChange}
               placeholder="0.00"
               min="0"
@@ -252,9 +265,6 @@ export const CreateWalkinAttendanceModal = ({ isOpen, onClose, onSuccess }: Crea
             </div>
             <p className="text-xs text-gray-500 mt-1">Payment Amount - Total Amount</p>
           </div>
-
-          {/* ✅ FEE PAID (hidden or kept for backend) */}
-          <input type="hidden" name="fee_paid" value={form.fee_paid} />
 
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-700/30">
             <button

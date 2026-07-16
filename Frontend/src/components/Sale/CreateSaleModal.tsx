@@ -23,8 +23,8 @@ const initialForm = {
   or_number: '',
   transaction_id: '',
   payment_status: 'paid' as 'pending' | 'paid' | 'failed',
-  payment_amount: '', 
-  total_amount: '', 
+  payment_amount: '',
+  total_amount: '0.00', // ✅ initialized to "0.00"
   products: [] as LineItem[],
 };
 
@@ -92,7 +92,18 @@ export const CreateSaleModal = ({ isOpen, onClose, onSuccess }: CreateSaleModalP
     }));
   };
 
-  const totalAmount = form.products.reduce((sum, item) => sum + item.quantity * item.price_at_sale, 0);
+  const totalAmount = form.products.reduce(
+    (sum, item) => sum + item.quantity * item.price_at_sale,
+    0
+  );
+
+  useEffect(() => {
+    setForm((prev) => ({
+      ...prev,
+      total_amount: totalAmount.toFixed(2),
+    }));
+  }, [totalAmount]);
+
   const paymentAmount = parseFloat(form.payment_amount) || 0;
   const changeAmount = Math.max(0, paymentAmount - totalAmount);
 
@@ -109,7 +120,8 @@ export const CreateSaleModal = ({ isOpen, onClose, onSuccess }: CreateSaleModalP
     setLoading(true);
     try {
       const formData = new FormData();
-      const fields = ['paid_by', 'payment_type', 'or_number', 'transaction_id', 'payment_status', 'payment_amount'];
+      // ✅ added 'total_amount' to fields
+      const fields = ['paid_by', 'payment_type', 'or_number', 'transaction_id', 'payment_status', 'payment_amount', 'total_amount'];
       for (const key of fields) {
         const val = form[key as keyof typeof form];
         if (val !== undefined && val !== null && val !== '') {
@@ -145,7 +157,7 @@ export const CreateSaleModal = ({ isOpen, onClose, onSuccess }: CreateSaleModalP
       <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl shadow-red-500/10">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-            Create Sale
+            Create Sale 
           </h2>
           <button onClick={handleClose} className="text-gray-400 hover:text-white transition p-1 rounded-lg hover:bg-gray-700/50">
             <X size={24} />
@@ -234,12 +246,14 @@ export const CreateSaleModal = ({ isOpen, onClose, onSuccess }: CreateSaleModalP
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300">Total</label>
+              <label className="block text-sm font-medium text-gray-300">
+                Total Amount
+              </label>
               <input
                 type="number"
                 step="0.01"
                 name="total_amount"
-                value={form.total_amount || totalAmount.toFixed(2)}
+                value={form.total_amount}
                 readOnly
                 className="mt-1 w-full bg-[#1e242c] border border-gray-600 rounded-lg px-4 py-2.5 text-gray-400 cursor-not-allowed"
               />
