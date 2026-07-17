@@ -175,7 +175,7 @@ export const ReportsPage = () => {
     });
     csv += '\n';
 
-    csv += 'SALES BY PAYMENT TYPE\n';
+    // csv += 'SALES BY PAYMENT TYPE\n';
     csv += 'Payment Type,Count,Total (₱)\n';
     salesByPayment?.forEach((item: any) => {
       csv += `${item.payment_type},${item.count},${item.total}\n`;
@@ -571,7 +571,7 @@ export const ReportsPage = () => {
             </div>
 
             {/* Sales by Payment Type */}
-            <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
+            {/* <div className="bg-[#14181f] rounded-2xl border border-gray-700/50 p-6 shadow-xl shadow-red-500/5 print-card">
               <h3 className="text-lg font-semibold text-white mb-4">Sales by Payment Type</h3>
               {paymentData.some((item: any) => item.total > 0) ? (
                 <ResponsiveContainer width="100%" height={250}>
@@ -601,7 +601,7 @@ export const ReportsPage = () => {
                   </div>
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
 
           {/* Membership and Contract Charts */}

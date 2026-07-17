@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
@@ -23,7 +24,7 @@ class ReportsCacheService
             $thisMonth = Carbon::now()->startOfMonth();
             $thisYear = Carbon::now()->startOfYear();
 
-            // Changed to total_amount
+            // Revenue using total_amount
             $salesRevenue = Sale::where('created_at', '>=', $thisMonth)->sum('total_amount');
             $contractRevenue = Contract::where('created_at', '>=', $thisMonth)
                 ->where('payment_status', 'paid')
@@ -32,7 +33,6 @@ class ReportsCacheService
                 ->where('payment_status', 'paid')
                 ->sum('total_amount');
 
-            // Changed to total_amount
             $salesToday = Sale::whereDate('created_at', $today)->sum('total_amount');
             $contractToday = Contract::whereDate('created_at', $today)
                 ->where('payment_status', 'paid')
@@ -40,6 +40,10 @@ class ReportsCacheService
             $membershipToday = MembershipFee::whereDate('created_at', $today)
                 ->where('payment_status', 'paid')
                 ->sum('total_amount');
+
+            // Walk‑in revenue using total_amount
+            $walkinRevenueToday = WalkinAttendance::whereDate('time_in', $today)->sum('total_amount');
+            $walkinRevenueThisMonth = WalkinAttendance::where('time_in', '>=', $thisMonth)->sum('total_amount');
 
             return [
                 'members' => [
@@ -53,7 +57,7 @@ class ReportsCacheService
                 'sales' => [
                     'today' => (float) ($salesToday + $contractToday + $membershipToday),
                     'this_month' => (float) ($salesRevenue + $contractRevenue + $membershipRevenue),
-                    'this_year' => (float) Sale::where('created_at', '>=', $thisYear)->sum('total_amount'), // Changed
+                    'this_year' => (float) Sale::where('created_at', '>=', $thisYear)->sum('total_amount'),
                     'breakdown' => [
                         'sales' => (float) $salesRevenue,
                         'contracts' => (float) $contractRevenue,
@@ -68,6 +72,8 @@ class ReportsCacheService
                     'total' => WalkinInfo::count(),
                     'today' => WalkinAttendance::whereDate('time_in', $today)->count(),
                     'this_month' => WalkinAttendance::where('time_in', '>=', $thisMonth)->count(),
+                    'revenue_today' => (float) $walkinRevenueToday,
+                    'revenue_this_month' => (float) $walkinRevenueThisMonth,
                 ],
             ];
         });
@@ -126,7 +132,6 @@ class ReportsCacheService
         return Cache::remember($cacheKey, $this->ttl, function () use ($days) {
             $startDate = Carbon::now()->subDays($days)->startOfDay();
 
-            // Changed to total_amount
             $salesData = Sale::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COALESCE(SUM(total_amount), 0) as total')
@@ -136,7 +141,6 @@ class ReportsCacheService
             ->get()
             ->keyBy('date');
 
-            // Changed to total_amount
             $contractData = Contract::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COALESCE(SUM(total_amount), 0) as total')
@@ -147,7 +151,6 @@ class ReportsCacheService
             ->get()
             ->keyBy('date');
 
-            // Changed to total_amount
             $membershipData = MembershipFee::select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COALESCE(SUM(total_amount), 0) as total')
@@ -195,7 +198,6 @@ class ReportsCacheService
                 ->limit($limit)
                 ->get();
 
-            // Return as array of objects with proper keys
             return $products->map(function ($item) {
                 return [
                     'name' => $item->name,
@@ -237,7 +239,6 @@ class ReportsCacheService
     public function getSalesByPaymentType()
     {
         return Cache::remember('reports_sales_by_payment', $this->ttl, function () {
-            // Changed to total_amount
             $sales = Sale::select(
                 'payment_type',
                 DB::raw('COUNT(*) as count'),
@@ -246,7 +247,6 @@ class ReportsCacheService
             ->groupBy('payment_type')
             ->get();
 
-            // Ensure both cash and gcash are always present
             $result = [];
             $paymentTypes = ['cash', 'gcash'];
             
@@ -270,7 +270,6 @@ class ReportsCacheService
                 ->groupBy('membership_status')
                 ->get();
 
-            // Ensure all statuses are present
             $statuses = ['active', 'expired', 'pending'];
             $result = [];
             
@@ -291,7 +290,6 @@ class ReportsCacheService
         return Cache::remember('reports_contract_distribution', $this->ttl, function () {
             $today = Carbon::today();
             
-            // Get all contracts with status
             $active = Contract::where('contract_to', '>=', $today)->count();
             $expired = Contract::where('contract_to', '<', $today)->count();
 
@@ -325,29 +323,31 @@ class ReportsCacheService
     {
         $cacheKey = "reports_revenue_breakdown_{$start}_{$end}";
         return Cache::remember($cacheKey, $this->ttl, function () use ($start, $end) {
-            // Changed to total_amount
             $salesRevenue = Sale::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->sum('total_amount');
 
-            // Changed to total_amount
             $contractRevenue = Contract::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->where('payment_status', 'paid')
                 ->sum('total_amount');
 
-            // Changed to total_amount
             $membershipRevenue = MembershipFee::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->where('payment_status', 'paid')
                 ->sum('total_amount');
 
+            $walkinRevenue = WalkinAttendance::whereDate('time_in', '>=', $start)
+                ->whereDate('time_in', '<=', $end)
+                ->sum('total_amount');  // <-- using total_amount
+
             return [
-                'total_revenue' => (float) ($salesRevenue + $contractRevenue + $membershipRevenue),
+                'total_revenue' => (float) ($salesRevenue + $contractRevenue + $membershipRevenue + $walkinRevenue),
                 'breakdown' => [
                     'sales' => (float) $salesRevenue,
                     'contracts' => (float) $contractRevenue,
                     'membership_fees' => (float) $membershipRevenue,
+                    'walk_ins' => (float) $walkinRevenue,
                 ],
                 'period' => ['start' => $start, 'end' => $end],
             ];
@@ -358,28 +358,30 @@ class ReportsCacheService
     {
         $cacheKey = "reports_all_revenue_{$start}_{$end}";
         return Cache::remember($cacheKey, $this->ttl, function () use ($start, $end) {
-            // Changed to total_amount
             $salesRevenue = Sale::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->sum('total_amount');
 
-            // Changed to total_amount
             $contractRevenue = Contract::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->where('payment_status', 'paid')
                 ->sum('total_amount');
 
-            // Changed to total_amount
             $membershipRevenue = MembershipFee::whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->where('payment_status', 'paid')
                 ->sum('total_amount');
 
+            $walkinRevenue = WalkinAttendance::whereDate('time_in', '>=', $start)
+                ->whereDate('time_in', '<=', $end)
+                ->sum('total_amount');  // <-- using total_amount
+
             return [
                 'sales' => (float) $salesRevenue,
                 'contracts' => (float) $contractRevenue,
                 'membership_fees' => (float) $membershipRevenue,
-                'total' => (float) ($salesRevenue + $contractRevenue + $membershipRevenue),
+                'walk_ins' => (float) $walkinRevenue,
+                'total' => (float) ($salesRevenue + $contractRevenue + $membershipRevenue + $walkinRevenue),
                 'period' => ['start' => $start, 'end' => $end],
             ];
         });
@@ -397,21 +399,16 @@ class ReportsCacheService
         Cache::forget('reports_top_products_5');
         Cache::forget('reports_top_products_10');
         
-        // Clear pattern-based caches
-        $keys = [
-            'reports_member_growth_',
-            'reports_sales_trend_',
-            'reports_attendance_trend_',
-            'reports_attendance_distribution_',
-            'reports_revenue_breakdown_',
-            'reports_all_revenue_',
-        ];
-        
-        foreach ($keys as $pattern) {
-            Cache::forget($pattern);
-        }
+        // Pattern-based caches – we need to clear specific keys or use a tag if available.
+        // Since we can't wildcard-forget easily, we clear known keys.
+        // If you're using Redis, you could use a prefix and flush by pattern.
+        // For simplicity, we'll clear the most common ones.
+        Cache::forget('reports_member_growth_12');
+        Cache::forget('reports_sales_trend_30');
+        Cache::forget('reports_attendance_trend_30');
+        // For dynamic keys, you might need to handle differently.
+        // You can also use Cache::flush() but that clears everything.
         
         return true;
     }
-
 }
