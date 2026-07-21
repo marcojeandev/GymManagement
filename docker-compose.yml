@@ -70,6 +70,7 @@ services:
       - "3000:80"
     environment:
       - VITE_API_URL=http://192.168.1.7:8000/api
+      - SKIP_ENV_VALIDATION=true
     depends_on:
       - backend
     networks:

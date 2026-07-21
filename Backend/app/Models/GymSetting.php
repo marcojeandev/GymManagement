@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class GymSetting extends Model
 {
@@ -23,4 +24,14 @@ class GymSetting extends Model
         'features' => 'array',
         'pricing' => 'array',
     ];
+
+    protected $appends = ['logo_url'];
+
+    public function getLogoUrlAttribute()
+    {
+        if (!$this->logo) {
+            return null;
+        }
+        return Storage::url($this->logo);
+    }
 }
